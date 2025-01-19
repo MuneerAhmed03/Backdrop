@@ -15,32 +15,25 @@ class SessionTokenAuthentication(BaseAuthentication):
             return None
 
         token = auth_header.split(' ')[1]
-        print(f"authentication class {token}")
+
         try:
-            payload = jwt.decode(
+            idinfo = id_token.verify_oauth2_token(
                 token, 
-                settings.NEXTAUTH_SECRET,
-                algorithms=['HS256', 'RS256']
+                requests.Request(), 
+                settings.GOOGLE_CLIENT_ID
             )
-            
-            email = payload.get('email')
+            email = idinfo.get('email')
             if not email:
-                try:
-                    idinfo = id_token.verify_oauth2_token(
-                        token, 
-                        requests.Request(), 
-                        settings.GOOGLE_CLIENT_ID
-                    )
-                    email = idinfo['email']
-                except Exception:
-                    raise AuthenticationFailed('Invalid token')
+                raise AuthenticationFailed('Email not found in token')
 
             user = User.objects.get(email=email)
             return (user, None)
 
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Token has expired')
-        except jwt.InvalidTokenError:
+        except ValueError as e:
+            print(f"Google token verification failed: {e}")
             raise AuthenticationFailed('Invalid token')
         except User.DoesNotExist:
             raise AuthenticationFailed('User not found')
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            raise AuthenticationFailed('Authentication failed')

@@ -14,7 +14,8 @@ export function AuthButton() {
   }
 
   const handleMakeRequest = () => {
-    console.log(session?.accessToken)
+    
+    console.log(`Bearer ${session?.accessToken}`)
     fetch("http://localhost:8000/auth/test/", {
       method: "POST",
       headers: {
@@ -22,7 +23,7 @@ export function AuthButton() {
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-  }
+  }                                                                                                                            
 
   if (session) {
     return (
