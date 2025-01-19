@@ -1,6 +1,4 @@
-
 from django.shortcuts import render
-from rest_framework_simplejwt import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,88 +6,50 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from rest_framework.permissions import BasePermission
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+import jwt
+from functools import wraps
+
+User = get_user_model()
 
 
-def get_tokens(user):
-    refresh = RefreshToken.for_user(user)
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }
+class ValidateGoogleToken(BaseAuthentication):
+    def authenticate(self, request):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return None
 
-class GoogleLoginView(APIView):
-    def post(self, request):
-        token = request.data.get('token')
-        if not token:
-            return Response({'error': 'ID token is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+        token = auth_header.split(' ')[1]
         try:
-            id_info = id_token.verify_oauth2_token(token, requests.Request(), settings.GOOGLE_CLIENT_ID)
-
-            email = id_info.get("email")
-            name = id_info.get("name")
-
-            if not email:
-                return Response({"error": "Invalid Token: email not found"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            User = get_user_model()
-            
-            user, created = User.objects.get_or_create(email=email, defaults={"username": name})
-
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
-
-            response = Response({"message": "Login Successful"})
-            response.set_cookie(
-                key="access_token",
-                value=access_token,
-                httponly=True,
-                secure=True,
-                max_age=604800
+            idinfo = id_token.verify_oauth2_token(
+                token, 
+                requests.Request(), 
+                settings.GOOGLE_CLIENT_ID
             )
-            response.set_cookie(
-                key="refresh_token",
-                value=refresh_token,
-                httponly=True,
-                secure=True,
-                max_age=604800
-            )
-
-            return response
-        except ValueError:
-            return Response({"error": "Invalid Google Token"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class TokenRefreshCookieView(APIView):
-    def post(self, request):
-        refresh_token = request.COOKIES.get('refresh_token')
-        if not refresh_token:
-            return Response({"error": "No refresh token found"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            token = RefreshToken(refresh_token)
-            new_access_token = str(token.access_token)
-            new_refresh_token = str(token)
-            
-            response = Response({"access": new_access_token})
-            
-            response.set_cookie(
-                "refresh_token",
-                new_refresh_token,
-                httponly=True,
-                secure=True,
-                samesite='Strict',
-            )
-            response.set_cookie(
-                "access_token",
-                new_access_token,
-                httponly=True,
-                secure=True,
-                samesite='Strict',
-            )
-            return response
+            print(idinfo)
+            verified_email = idinfo['email']
+            name = idinfo['name']
+            print(f"initialising session for user with email {verified_email} and name {name}")
+            user, _ = User.objects.get_or_create(email=verified_email,username=name)
+            return (user, None)
         except Exception as e:
-            print(f"Error refreshing token: {e}")
-            return Response({"error": "Invalid or expired refresh token"}, status=status.HTTP_401_UNAUTHORIZED)
+            raise AuthenticationFailed(f'Invalid token: {str(e)}')
 
+class CreateUserView(APIView):
+
+    authentication_classes = [ValidateGoogleToken]
+    permission_classes = []
+
+    def post(self, request):
+        user = request.user
+        print(f"user from creste user view: {user} && {user.username}")
+        if not user.email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)            
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+
+class TestView(APIView):
+    def post(self, request):
+        print(request.user)
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)

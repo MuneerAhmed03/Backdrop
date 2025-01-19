@@ -18,6 +18,7 @@ DEBUG = config('POSTGRES_PORT', default='3000')
 print("DEBUG:", DEBUG)
 
 GOOGLE_CLIENT_ID=config('GOOGLE_CLIENT_ID')
+NEXTAUTH_SECRET=config('NEXTAUTH_SECRET')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -56,12 +57,20 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3001",  
+    "https://yourfrontenddomain.com", 
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'config.urls'
 
@@ -83,7 +92,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -98,11 +106,15 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'authorization.User' 
+AUTH_USER_MODEL = 'authorization.User'
+
+# SECRET_KEY=config('SECRET_KEY')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'apps.Authentication.SessionTokenAuthentication',  
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',

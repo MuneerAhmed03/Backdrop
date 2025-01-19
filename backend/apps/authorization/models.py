@@ -7,6 +7,8 @@ class User(AbstractUser):
     email=models.EmailField(unique=True)
     profile_pictue=models.URLField(blank=True,null=True)
 
+    # django by default uses username as the unqiue identfier
+    # we want to use email as the unique identifier
     USERNAME_FIELD = 'email' 
     REQUIRED_FIELDS = []
 
