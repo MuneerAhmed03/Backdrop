@@ -52,6 +52,7 @@ INSTALLED_APPS = [
 
     'apps.market_data',
     'apps.authorization.apps.AuthorizationConfig',
+    'apps.strategy.apps.StrategyConfig',
 ]
 
 MIDDLEWARE = [
