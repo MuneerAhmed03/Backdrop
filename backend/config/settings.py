@@ -14,11 +14,13 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 
-DEBUG = config('POSTGRES_PORT', default='3000')
+
+DEBUG = config('url', default='3000')
 print("DEBUG:", DEBUG)
 
 GOOGLE_CLIENT_ID=config('GOOGLE_CLIENT_ID')
 NEXTAUTH_SECRET=config('NEXTAUTH_SECRET')
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -1,25 +1,45 @@
 import requests
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import AllowAny
 from .models import StockData
-from .utils import prepare_dict
+from .utils import prepare_dict,prepare_list
 from decouple import config
 from .serializers import StockDataSerializer
+from django.contrib.postgres.search import SearchRank,SearchQuery
 
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def search(request):
+    query=request.GET.get('q','')
+    if not query:
+        return Response({"error": "invalid query"},status=400)
+    print(f"query equals to {query}")
+    search_query = SearchQuery(query,search_type='websearch',config='english')
+    stock_list  = StockData.objects.annotate(
+        rank = SearchRank('search_vector',search_query)
+    ).filter(search_vector = search_query).order_by('-rank')
+    print(f"stock_list is {stock_list}")
+    serializer = StockDataSerializer(stock_list,many=True)
+    print(f"serializer data is {serializer}")
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def fetch_and_store_stock_data(request):
     try:
 
         nse_dict = prepare_dict(config('names_url'), "SYMBOL", "NAME OF COMPANY", " DATE OF LISTING", "%d-%b-%Y")
         etf_dict=prepare_dict(config('etf_url'),"Symbol", "SecurityName", "DateofListing", "%d-%b-%y")
 
-        response = requests.get(config('url'))  
-        response.raise_for_status()  
-        
-        data = response.json()
+        print(config('url'))
+        data = prepare_list(config('url'))
 
         for item in data:
-            name = item.get("name", "")
+            name = item.get("path", "")
             if "_" not in name:  
                 source_file = name
                 symbol = name.replace(".csv", "").upper() 
@@ -54,7 +74,5 @@ def fetch_and_store_stock_data(request):
 
     except Exception as e:
         return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
-
-
 
 

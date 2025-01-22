@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('data/',include("apps.market_data.urls")),
     path('auth/',include("apps.authorization.urls")),
+    path('strategy',include("apps.strategy.urls"))
 ]

@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,11 +5,9 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from rest_framework.permissions import BasePermission
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-import jwt
-from functools import wraps
+
 
 User = get_user_model()
 
