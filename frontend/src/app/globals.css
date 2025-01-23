@@ -47,7 +47,7 @@
     @apply text-[var(--foreground)] font-semibold tracking-tight;
   }
 
-  p {
+  p {    
     @apply text-[var(--foreground-subtle)] leading-relaxed;
   }
 }

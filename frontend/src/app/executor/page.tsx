@@ -1,48 +1,18 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { CodeEditor } from '../components/executor/CodeEditor'
-import { Header } from '../components/executor/Header'
-import { TemplatesModal } from '../components/executor/Templates'
+import { CodeEditor } from '@/components/executor/CodeEditor'
+import { Header } from '@/components/executor/Header'
+import { TemplatesModal } from '@/components/executor/Templates'
 import { BookOpen, ChevronRight, Settings2 } from 'lucide-react'
+import DebouncedSearch from "@/components/executor/SearchBar"
 
-const DEFAULT_CODE = `# Moving Average Crossover Strategy
-import pandas as pd
-import numpy as np
-
-def initialize(context):
-    context.stock = "RELIANCE"  # Stock to trade
-    context.short_window = 20   # Short moving average window
-    context.long_window = 50    # Long moving average window
-    context.initial_capital = 100000
-    context.position = 0
+const DEFAULT_CODE = `# 
 
 def handle_data(context, data):
-    # Get historical data
-    hist = data.history(context.stock, ["close"], 
-                       context.long_window, "1d")
-    
-    if len(hist) < context.long_window:
-        return
-    
-    # Calculate moving averages    
-    short_ma = hist["close"].rolling(window=context.short_window).mean()
-    long_ma = hist["close"].rolling(window=context.long_window).mean()
-    
-    current_position = context.position
-    current_price = data.current(context.stock, "close")
-    
-    # Trading logic
-    if short_ma[-1] > long_ma[-1] and current_position <= 0:
-        # Buy signal
-        shares_to_buy = context.initial_capital // current_price
-        order(context.stock, shares_to_buy)
-        context.position = shares_to_buy
-        
-    elif short_ma[-1] < long_ma[-1] and current_position >= 0:
-        # Sell signal
-        order(context.stock, -context.position)
-        context.position = 0`;
+    ""
+      data: panda dataframe for selected instrument's data
+    ""`
 
 export default function Executor() {
   const [showTemplates, setShowTemplates] = useState(false)
@@ -168,13 +138,17 @@ export default function Executor() {
             ) : (
               <div className="space-y-6">
                 <div>
+                  <label className="block text-sm font-medium mb-2">Intrument</label>
+                  <DebouncedSearch/>
+                </div>
+                <div>
                   <label className="block text-sm font-medium mb-2">Time Period</label>
                   <select className="input">
                     <option>Last 1 Year</option>
                     <option>Last 2 Years</option>
                     <option>Last 5 Years</option>
                     <option>Custom Range</option>
-                  </select>
+                  </select>   
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Initial Capital</label>

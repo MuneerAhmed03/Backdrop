@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AuthButton } from './components/AuthButton'
+import { AuthButton } from '@/components/AuthButton'
 import { ArrowRight, Code2, LineChart, Zap } from 'lucide-react'
 
 export default function Home() {

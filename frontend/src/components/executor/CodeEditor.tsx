@@ -8,6 +8,12 @@ interface CodeEditorProps {
 }
 
 export function CodeEditor({ value, onChange }: CodeEditorProps) {
+  function handleEditorValidation(markers:any) {
+    
+    markers.forEach((marker:any) => console.log('onValidate:', marker.message));
+  }
+
+
   const handleEditorWillMount = (monaco: any) => {
     monaco.editor.defineTheme('backdrop-dark', {
       base: 'vs-dark',
@@ -17,6 +23,10 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
         'editor.background': '#09090b',
         'editor.foreground': '#fafafa',
         'editor.lineHighlightBackground': '#27272a',
+        'editorGutter.background': '#09090b00', // Transparent background
+        'editorGutter.modifiedBackground': '#09090b00',
+        'editorGutter.addedBackground': '#09090b00',
+        'editorGutter.deletedBackground': '#09090b00',
         'editor.selectionBackground': '#3f3f46',
         'editor.inactiveSelectionBackground': '#27272a',
         'editorLineNumber.foreground': '#52525b',
@@ -38,6 +48,7 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
       defaultLanguage="python"
       theme="backdrop-dark"
       value={value}
+      onValidate={handleEditorValidation}
       onChange={(value) => onChange(value || '')}
       beforeMount={handleEditorWillMount}
       options={{
@@ -56,9 +67,12 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
         smoothScrolling: true,
         contextmenu: true,
         mouseWheelZoom: true,
+        folding:false,
+        lineNumbersMinChars: 2,
         bracketPairColorization: {
           enabled: true
-        }
+        },
+        
       }}
     />
   );
