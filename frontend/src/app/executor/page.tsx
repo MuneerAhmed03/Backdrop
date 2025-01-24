@@ -7,12 +7,29 @@ import { TemplatesModal } from '@/components/executor/Templates'
 import { BookOpen, ChevronRight, Settings2 } from 'lucide-react'
 import DebouncedSearch from "@/components/executor/SearchBar"
 
-const DEFAULT_CODE = `# 
+const DEFAULT_CODE = `
+  def backtest(data):
+    """
+    Perform a backtest on historical OHLC data.
 
-def handle_data(context, data):
-    ""
-      data: panda dataframe for selected instrument's data
-    ""`
+    Parameters:
+    data (pd.DataFrame): A Pandas DataFrame with the following columns:
+        - 'date' (str): Date in YYYY-MM-DD format.
+        - 'open' (float): Opening price of the instrument.
+        - 'high' (float): Highest price of the day.
+        - 'low' (float): Lowest price of the day.
+        - 'close' (float): Closing price of the instrument.
+        - 'volume' (int): Trading volume.
+
+    Example row:
+        date       | open  | high  | low   | close | volume  
+        -----------|-------|-------|-------|-------|--------
+        2024-01-01 | 100.5 | 105.0 | 99.5  | 103.2 | 1200000
+
+    Returns:
+    pd.DataFrame: A DataFrame with added strategy signals.
+    """
+`
 
 export default function Executor() {
   const [showTemplates, setShowTemplates] = useState(false)

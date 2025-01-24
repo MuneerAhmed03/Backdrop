@@ -82,9 +82,6 @@ export default function DebouncedSearch() {
       </ul>
     )}
   </div>
-  {results.length === 0 && query && !isLoading && (
-    <p className="text-sm text-[var(--foreground-subtle)]">No results found.</p>
-  )}
 </div>
 
 

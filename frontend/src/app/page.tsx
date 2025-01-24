@@ -11,9 +11,7 @@ export default function Home() {
             Backdrop
           </Link>
           <div className="flex items-center gap-6">
-            <Link href="/docs" className="btn-ghost">
-              Docs
-            </Link>
+          
             <AuthButton />
           </div>
         </div>
