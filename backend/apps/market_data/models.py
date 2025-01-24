@@ -11,21 +11,14 @@ class StockData(models.Model):
     latest_date = models.DateField(null=True)
     isEtf = models.BooleanField(default=False)
     source_file = models.CharField(max_length=255)
-    search_vector = SearchVectorField(null=True,blank =True)
+    # search_vector = SearchVectorField(null=True,blank =True)
 
     class Meta:
-        indexes = [GinIndex(fields =['search_vector'])]
+        indexes = [ 
+                    GinIndex(name="stockdata_trgm_symbol_idx", fields=["symbol"], opclasses=["gin_trgm_ops"]),
+                    GinIndex(name="stockdata_trgm_stock_name_idx", fields=["stock_name"], opclasses=["gin_trgm_ops"])
+                ] 
 
-    def save(self, *args,**kwargs):
-        super().save(*args,**kwargs)
-
-        StockData.objects.filter(pk=self.pk).update(
-        search_vector=(
-            SearchVector('symbol', weight='A', config='english') +
-            SearchVector('stock_name', weight='B', config='english')
-        )
-    )
-        
 
     def __str__(self):
         return f"{self.symbol} ({self.stock_name})"

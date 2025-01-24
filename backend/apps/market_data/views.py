@@ -6,23 +6,34 @@ from .models import StockData
 from .utils import prepare_dict,prepare_list
 from decouple import config
 from .serializers import StockDataSerializer
-from django.contrib.postgres.search import SearchRank,SearchQuery
+from django.contrib.postgres.search import  TrigramSimilarity
+from django.db.models import Q,  FloatField
+from django.db.models.functions import  Greatest, Coalesce
 
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([AllowAny])
 def search(request):
-    query=request.GET.get('q','')
+    query = request.GET.get('q', '').strip()
     if not query:
-        return Response({"error": "invalid query"},status=400)
-    print(f"query equals to {query}")
-    search_query = SearchQuery(query,search_type='websearch',config='english')
-    stock_list  = StockData.objects.annotate(
-        rank = SearchRank('search_vector',search_query)
-    ).filter(search_vector = search_query).order_by('-rank')
-    print(f"stock_list is {stock_list}")
-    serializer = StockDataSerializer(stock_list,many=True)
-    print(f"serializer data is {serializer}")
+        return Response({"error": "invalid query"}, status=400)
+
+    stock_list = StockData.objects.annotate(
+        symbol_similarity=TrigramSimilarity('symbol', query),
+        stock_name_similarity=TrigramSimilarity('stock_name', query),
+
+        max_similarity=Greatest(
+            Coalesce('symbol_similarity', 0.0, output_field=FloatField()),
+            Coalesce('stock_name_similarity', 0.0, output_field=FloatField())
+        )
+    ).filter(
+        Q(symbol_similarity__gt=0.3) | Q(stock_name_similarity__gt=0.3)
+    ).order_by(
+        '-max_similarity',  
+        '-symbol_similarity', '-stock_name_similarity' 
+    )
+
+    serializer = StockDataSerializer(stock_list, many=True)
     return Response(serializer.data)
 
 

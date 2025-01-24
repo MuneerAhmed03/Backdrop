@@ -71,6 +71,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",  
     "https://yourfrontenddomain.com", 
+    "http://localhost:3000",
     "http://localhost:3002",
 ]
 
