@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'apps.market_data',
     'apps.authorization.apps.AuthorizationConfig',
     'apps.strategy.apps.StrategyConfig',
+    'apps.engine.apps.EngineConfig'
 ]
 
 MIDDLEWARE = [
@@ -174,3 +175,27 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_REDIS_MAX_CONNECTIONS = 20
+CELERY_BROKER_CONNECTION_RETRY = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_CONNECTION_MAX_RETRIES = 10
+CELERY_BROKER_POOL_LIMIT = 10
+CELERY_REDIS_SOCKET_TIMEOUT = 5
+CELERY_REDIS_SOCKET_CONNECT_TIMEOUT = 5
+
+# Security Settings for Code Execution
+ALLOWED_BUILTINS = [
+    'abs', 'bool', 'dict', 'float', 'int', 'len',
+    'list', 'max', 'min', 'range', 'round', 'str',
+    'sum', 'tuple', 'type'
+]
