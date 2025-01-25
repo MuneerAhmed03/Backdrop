@@ -1,16 +1,14 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from .tasks import execute_code
 from rest_framework import status, permissions
-from celery.exceptions import OperationalError
+from .tasks import execute_code, get_execution_result
+from celery.result import AsyncResult
 import logging
 from redis.exceptions import ConnectionError
 import redis
 from celery.app.control import Control
 from config.celery import app as celery_app
-from celery.result import AsyncResult
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +17,7 @@ class ServiceStatus:
     def check_redis():
         try:
             r = redis.Redis(
-                host='127.0.0.1',
+                host='redis',
                 port=6379,
                 db=0,
                 socket_connect_timeout=2,
@@ -68,19 +66,32 @@ class TaskResultView(APIView):
     permission_classes = [permissions.AllowAny]
     
     def get(self, request, task_id):
-        task_result = AsyncResult(task_id)
-        
-        if task_result.ready():
-            result = task_result.get()
-            return Response({
-                'status': 'completed',
-                'result': result
-            })
-        else:
+        try:
+            # First check if the task is still in Celery
+            celery_result = AsyncResult(task_id)
+            
+            if celery_result.ready():
+                # If Celery task is done, check Redis for actual execution result
+                result_task = get_execution_result.delay(task_id)
+                execution_result = result_task.get(timeout=5)  # Short timeout as this should be quick
+                
+                if execution_result['status'] == 'completed':
+                    return Response(execution_result)
+                elif execution_result['status'] == 'error':
+                    return Response({
+                        'error': execution_result['error']
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
             return Response({
                 'status': 'pending',
                 'message': 'Task is still processing'
             })
+            
+        except Exception as e:
+            logger.error(f"Error checking task status: {str(e)}")
+            return Response({
+                'error': f"Error checking task status: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CodeExecutionView(APIView):
     authentication_classes = []
@@ -113,28 +124,15 @@ class CodeExecutionView(APIView):
             )
             
         try:
-            task = execute_code.apply_async(
-                args=[code],
-                retry=True,
-                retry_policy={
-                    'max_retries': 3,
-                    'interval_start': 0,
-                    'interval_step': 0.2,
-                    'interval_max': 0.5,
-                }
-            )
+            # Execute code asynchronously
+            task = execute_code.delay(code)
             
             return Response({
                 'task_id': task.id,
+                'status': 'pending',
                 'message': 'Code execution task has been queued',
                 'status_url': f'/engine/task/{task.id}/'
             }, status=status.HTTP_202_ACCEPTED)
-            
-        except OperationalError as e:
-            logger.error(f"Celery Operational Error: {str(e)}")
-            return Response({
-                'error': 'Task queue is currently unavailable. Please try again later.'
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         except Exception as e:
             logger.error(f"Unexpected error in code execution: {str(e)}")
