@@ -199,3 +199,20 @@ ALLOWED_BUILTINS = [
     'list', 'max', 'min', 'range', 'round', 'str',
     'sum', 'tuple', 'type'
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'apps.engine.tasks': {
+            'handlers': ['console'],
+            'level': 'DEBUG',  # Set to DEBUG to see debug logs
+            'propagate': True,
+        },
+    },
+}
