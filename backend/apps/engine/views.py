@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .tasks import execute_code
+from .tasks import execute_code_task
 from celery.result import AsyncResult
 import logging
 from redis.exceptions import ConnectionError
@@ -17,7 +17,7 @@ class ServiceStatus:
     def check_redis():
         try:
             r = redis.Redis(
-                host='redis',
+                host='localhost',
                 port=6379,
                 db=0,
                 socket_connect_timeout=2,
@@ -31,9 +31,33 @@ class ServiceStatus:
     @staticmethod
     def celery_status():
         try:
-            return bool(celery_app.control.ping(timeout=1))
+            inspect = celery_app.control.inspect()
+            active_workers = inspect.active()
+            
+            if active_workers is None:
+                logger.error("No response from Celery workers")
+                return False
+            
+            queues = inspect.active_queues()
+            if not queues:
+                logger.error("No active queues found")
+                return False
+            
+            execution_queue_workers = any(
+                'execution_queue' in worker_queues[0].get('name', '')
+                for worker_queues in queues.values()
+                if worker_queues
+            )
+            
+            if not execution_queue_workers:
+                logger.error("No workers found for execution_queue")
+                return False
+            
+            logger.info(f"Celery status: Active workers found with execution_queue")
+            return True
+            
         except Exception as e:
-            logger.debug(f'celery ping failed: {str(e)}')
+            logger.error(f'Detailed Celery status check failed: {str(e)}', exc_info=True)
             return False
 
 class HealthCheckView(APIView):
@@ -82,18 +106,27 @@ class CodeExecutionView(APIView):
     permission_classes = [permissions.AllowAny]
     
     def post(self, request):
-        if not ServiceStatus.check_redis()[0] or not ServiceStatus.celery_status():
-            return Response({
-                'error': 'service unavailable'
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        redis_status, redis_message = ServiceStatus.check_redis()
+        celery_status = ServiceStatus.celery_status()
+        
+        if not redis_status or not celery_status:
+            error_details = {
+                'error': 'service unavailable',
+                'redis_available': redis_status,
+                'redis_message': redis_message if not redis_status else None,
+                'celery_available': celery_status
+            }
+            logger.error(f"Service unavailable: {error_details}")
+            return Response(error_details, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         code = request.data.get('code')
         if not code:
             return Response({'error': 'missing code'}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
-            task = execute_code.delay(code)
-            logger.info(f'task scheduled {task}')
+            # Explicitly specify the queue
+            task = execute_code_task.apply_async(args=[code], queue='execution_queue')
+            logger.info(f'task scheduled {task} on execution_queue')
             return Response({
                 'task_id': task.id,
                 'status_url': f'/engine/task/{task.id}/'

@@ -3,47 +3,38 @@ import time
 import logging
 from celery import Celery
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create the Celery app
 app = Celery('backdrop')
 
-# Load configuration from environment variables with defaults
 class CeleryConfig:
-    # Broker and Backend settings
     broker_url = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
     result_backend = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
     
-    # Task execution settings
     task_time_limit = 300
     task_soft_time_limit = 240
     task_acks_late = True
     task_reject_on_worker_lost = True
     task_default_retry_delay = 5
     task_max_retries = 3
-    
-    # Worker settings
     worker_send_task_events = True
     task_send_sent_event = True
     worker_concurrency = int(os.getenv('CELERY_WORKER_CONCURRENCY', '2'))
-    
-    # Task routing
+
     task_routes = {
-        'worker.tasks.execute_code_task': {'queue': 'execution_queue'},
+        'apps.engine.tasks.execute_code_task': {'queue': 'execution_queue'},
     }
-    
-    # Import paths for task discovery
+
     imports = (
-        'worker.tasks',
+        'apps.engine.tasks',
     )
 
-# Apply configuration
 app.config_from_object(CeleryConfig)
 
-# Discover tasks
-app.autodiscover_tasks(['worker'])
+if os.getenv('USE_DJANGO', 'true').lower() == 'true':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+    app.autodiscover_tasks()
 
 @app.on_after_configure.connect
 def retry_broker_connection(sender, **kwargs):

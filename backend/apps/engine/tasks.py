@@ -1,15 +1,36 @@
-
 from celery import shared_task
+from .pool import ContainerPool
+import docker
+import os
+import logging
 
-@shared_task(name='worker.tasks.execute_code_task', bind=True, acks_late=True, queue='execution_queue')
-def execute_code(self, code):
-    """
-    Proxy task that forwards the code execution request to the worker.
-    The actual implementation is in the worker package on the Celery workers.
-    
-    By setting the name to 'worker.tasks.execute_code_task', we ensure this task
-    matches the implementation in the worker container.
-    """
-    # The actual implementation is in the worker container
-    # This proxy just defines the task interface for the Django app
-    raise NotImplementedError("This is a proxy task. The actual implementation is in the worker container.")
+pool = ContainerPool()
+
+logger = logging.getLogger(__name__)
+
+@shared_task(bind=True, acks_late=True, queue='execution_queue')
+def execute_code_task(self, code):
+    pool=None
+    if os.getenv("RUNTIME_CELERY","false").lower() == "true":
+        logger.info(f'initialising the container pool')
+        pool=ContainerPool()
+
+    container = None
+    try:
+        container = pool.acquire_container()
+        exec_result = container.exec_run(
+            'python /app/execute.py',
+            environment={'USER_CODE': code},
+            workdir='/tmp',
+            demux=True
+        )
+        return {
+            'exit_code': exec_result.exit_code,
+            'stdout': exec_result.output[0].decode() if exec_result.output[0] else '',
+            'stderr': exec_result.output[1].decode() if exec_result.output[1] else ''
+        }
+    except docker.errors.APIError as e:
+        self.retry(exec=e, countdown=5, max_retries=3)
+    finally:
+        if container:
+            pool.release_container(container) 
