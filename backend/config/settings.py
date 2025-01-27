@@ -176,7 +176,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Celery Configuration
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
@@ -193,7 +192,6 @@ CELERY_BROKER_POOL_LIMIT = 10
 CELERY_REDIS_SOCKET_TIMEOUT = 5
 CELERY_REDIS_SOCKET_CONNECT_TIMEOUT = 5
 
-# Security Settings for Code Execution
 ALLOWED_BUILTINS = [
     'abs', 'bool', 'dict', 'float', 'int', 'len',
     'list', 'max', 'min', 'range', 'round', 'str',

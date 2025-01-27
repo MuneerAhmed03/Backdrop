@@ -1,44 +1,68 @@
 import os
-from celery import Celery
-from django.conf import settings
 import time
+import logging
+from celery import Celery
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-class MyCelery(Celery):
-    def on_connection_error(self, exc, interval):
-        print(f"Celery connection error: {exc}. Retrying in {interval} seconds...")
+# Create the Celery app
+app = Celery('backdrop')
 
-app = MyCelery('config')
-app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()
+# Load configuration from environment variables with defaults
+class CeleryConfig:
+    # Broker and Backend settings
+    broker_url = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
+    result_backend = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+    
+    # Task execution settings
+    task_time_limit = 300
+    task_soft_time_limit = 240
+    task_acks_late = True
+    task_reject_on_worker_lost = True
+    task_default_retry_delay = 5
+    task_max_retries = 3
+    
+    # Worker settings
+    worker_send_task_events = True
+    task_send_sent_event = True
+    worker_concurrency = int(os.getenv('CELERY_WORKER_CONCURRENCY', '2'))
+    
+    # Task routing
+    task_routes = {
+        'worker.tasks.execute_code_task': {'queue': 'execution_queue'},
+    }
+    
+    # Import paths for task discovery
+    imports = (
+        'worker.tasks',
+    )
 
-# Configure Celery to handle connection errors
-app.conf.broker_transport_options = {
-    'max_retries': 3,
-    'interval_start': 0,
-    'interval_step': 0.2,
-    'interval_max': 0.5,
-}
+# Apply configuration
+app.config_from_object(CeleryConfig)
+
+# Discover tasks
+app.autodiscover_tasks(['worker'])
 
 @app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
+def retry_broker_connection(sender, **kwargs):
     max_retries = 5
     retry_delay = 1
     
     for i in range(max_retries):
         try:
             sender.connection()
-            print("Successfully connected to broker")
+            logger.info("Successfully connected to broker")
             break
         except Exception as e:
             if i == max_retries - 1:
-                print(f"Failed to connect after {max_retries} attempts")
+                logger.error(f"Failed to connect after {max_retries} attempts")
                 raise
-            print(f"Connection attempt {i + 1} failed, retrying in {retry_delay} seconds...")
+            logger.warning(f"Connection attempt {i + 1} failed, retrying in {retry_delay} seconds...")
             time.sleep(retry_delay)
             retry_delay *= 2
 
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
-    print(f'Request: {self.request!r}')
+    logger.info(f'Request: {self.request!r}')

@@ -37,18 +37,17 @@ services:
           memory: 512M
 
   celery_worker:
-    build: .
-    command: sh -c "python manage.py migrate && celery -A config worker -l info"
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+      args:
+        DOCKER_GID: ${DOCKER_GID}
     volumes:
-      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DOCKER_HOST=unix:///var/run/docker.sock
     depends_on:
       - redis
       - postgres
@@ -64,35 +63,28 @@ services:
           memory: 512M
 
   sandbox:
-    build: 
-      context: ./docker/sandbox
-      dockerfile: Dockerfile
+    profiles: ["build"]
+    build: ./docker/sandbox
+    image: code-sandbox
     networks:
       - backend
-    deploy:
-      replicas: 2
-      restart_policy:
-        condition: on-failure
-      update_config:
-        parallelism: 1
-        delay: 10s
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
     read_only: true
     tmpfs:
-      - /tmp:size=64M,noexec
+      - /tmp:size=64M,noexec,nosuid
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   web:
-    build: .
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - .:/app
+    build:
+      context: .
+      dockerfile: Dockerfile.web
     ports:
       - "8000:8000"
     environment:
@@ -105,8 +97,6 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
     depends_on:
       - redis
-      - celery_worker
-      - sandbox
       - postgres
     networks:
       - backend
@@ -121,9 +111,9 @@ services:
 
 networks:
   backend:
-    driver: overlay
+    driver: bridge
     attachable: true
 
 volumes:
   redis_data:
-  postgres_data: 
+  postgres_data:

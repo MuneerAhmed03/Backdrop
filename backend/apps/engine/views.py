@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .tasks import execute_code, get_execution_result
+from .tasks import execute_code
 from celery.result import AsyncResult
 import logging
 from redis.exceptions import ConnectionError
@@ -29,37 +29,24 @@ class ServiceStatus:
             return False, str(e)
 
     @staticmethod
-    def check_celery():
+    def celery_status():
         try:
-            control = Control(celery_app)
-            workers = control.ping(timeout=1)
-            if not workers:
-                return False, "No workers available"
-            return True, "Workers active"
+            return bool(celery_app.control.ping(timeout=1))
         except Exception as e:
-            return False, str(e)
+            logger.debug(f'celery ping failed: {str(e)}')
+            return False
 
 class HealthCheckView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        redis_status, redis_message = ServiceStatus.check_redis()
-        celery_status, celery_message = ServiceStatus.check_celery()
-
-        status_info = {
-            'redis': {
-                'status': 'healthy' if redis_status else 'unhealthy',
-                'message': redis_message
-            },
-            'celery': {
-                'status': 'healthy' if celery_status else 'unhealthy',
-                'message': celery_message
-            }
+        services = {
+            'redis': ServiceStatus.check_redis(),
+            'celery': ServiceStatus.celery_status()
         }
-
-        overall_status = status.HTTP_200_OK if (redis_status and celery_status) else status.HTTP_503_SERVICE_UNAVAILABLE
-        return Response(status_info, status=overall_status)
+        http_status = status.HTTP_200_OK if all(services.values()) else status.HTTP_503_SERVICE_UNAVAILABLE
+        return Response(services, status=http_status)
 
 class TaskResultView(APIView):
     authentication_classes = []
@@ -67,24 +54,21 @@ class TaskResultView(APIView):
     
     def get(self, request, task_id):
         try:
-            # First check if the task is still in Celery
-            celery_result = AsyncResult(task_id)
+            result = AsyncResult(task_id, app=celery_app)
             
-            if celery_result.ready():
-                # If Celery task is done, check Redis for actual execution result
-                result_task = get_execution_result.delay(task_id)
-                execution_result = result_task.get(timeout=5)  # Short timeout as this should be quick
-                
-                if execution_result['status'] == 'completed':
-                    return Response(execution_result)
-                elif execution_result['status'] == 'error':
-                    return Response({
-                        'error': execution_result['error']
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
+            if result.successful():
+                return Response({
+                    'status': 'completed',
+                    'result': result.result
+                })
+            elif result.failed():
+                return Response({
+                    'status': 'error',
+                    'error': str(result.result)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             return Response({
-                'status': 'pending',
-                'message': 'Task is still processing'
+                'status': result.state.lower(),
+                'eta': result.result.get('eta') if result.result else None
             })
             
         except Exception as e:
@@ -97,45 +81,24 @@ class CodeExecutionView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
     
-    def check_services(self):
-        redis_status, redis_message = ServiceStatus.check_redis()
-        celery_status, celery_message = ServiceStatus.check_celery()
-        
-        if not redis_status:
-            return False, f"Redis service unavailable: {redis_message}"
-        if not celery_status:
-            return False, f"Celery service unavailable: {celery_message}"
-        return True, "Services operational"
-    
     def post(self, request):
-        services_ok, message = self.check_services()
-        if not services_ok:
-            logger.error(message)
+        if not ServiceStatus.check_redis()[0] or not ServiceStatus.celery_status():
             return Response({
-                'error': message
+                'error': 'service unavailable'
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         code = request.data.get('code')
-        
         if not code:
-            return Response(
-                {'error': 'No code provided'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'missing code'}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
-            # Execute code asynchronously
             task = execute_code.delay(code)
-            
+            logger.info(f'task scheduled {task}')
             return Response({
                 'task_id': task.id,
-                'status': 'pending',
-                'message': 'Code execution task has been queued',
                 'status_url': f'/engine/task/{task.id}/'
             }, status=status.HTTP_202_ACCEPTED)
             
         except Exception as e:
-            logger.error(f"Unexpected error in code execution: {str(e)}")
-            return Response({
-                'error': 'An unexpected error occurred'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f'code submission failed: {str(e)}')
+            return Response({'error': 'processing failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

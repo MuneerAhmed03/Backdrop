@@ -1,26 +1,26 @@
-FROM python:3.11-slim
+FROM python:3.10-slim AS builder
 
-# Install system dependencies
+WORKDIR /app
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends gcc python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user
-RUN useradd -m -s /bin/bash sandbox_user
+RUN pip install --no-cache-dir pandas
 
-# Create working directory
-WORKDIR /sandbox
+# runtime stage
+FROM python:3.10-slim
+WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# copy pandas from builder (correct path)
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy the sandbox worker
-COPY sandbox_server.py .
+# runtime essentials
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends procps && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m sandboxuser
 
-# Switch to non-root user
-USER sandbox_user
-
-# Run the worker
-CMD ["python", "sandbox_server.py"] 
+USER sandboxuser
+COPY execute.py .
+CMD ["sleep", "infinity"]

@@ -1,0 +1,57 @@
+# Stage 1: Builder
+FROM python:3.10-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    libpq-dev \
+    libffi-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+COPY config/celery.py ./config/
+COPY config/__init__.py ./config/
+COPY worker ./worker/
+
+# Stage 2: Final
+FROM python:3.10-slim
+
+# Install Docker CLI and dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libpq5 \
+    docker.io \
+    gosu \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy installed Python packages from the builder stage
+COPY --from=builder /install /usr/local
+# Copy application code from the builder stage
+COPY --from=builder /app /app
+
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Set environment variables
+ENV USE_DJANGO=false
+ENV CELERY_WORKER_CONCURRENCY=2
+
+# Create appuser (without docker group initially)
+RUN useradd -m appuser && \
+    chown -R appuser:appuser /app
+
+# Set the entrypoint (runs as root)
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Default command to start the Celery worker
+CMD ["celery", "-A", "config.celery:app", "worker", "-l", "info", "-Q", "execution_queue"]
