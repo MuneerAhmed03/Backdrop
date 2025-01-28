@@ -11,15 +11,17 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-from decouple import config
+import os
+from dotenv import load_dotenv
 from datetime import timedelta
 
+load_dotenv()
 
-DEBUG = config('url', default='3000')
+DEBUG = os.getenv('url', '3000')
 print("DEBUG:", DEBUG)
 
-GOOGLE_CLIENT_ID=config('GOOGLE_CLIENT_ID')
-NEXTAUTH_SECRET=config('NEXTAUTH_SECRET')
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -104,11 +106,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB',default='postgres'),
-        'USER': config('POSTGRES_USER',default='postgres'),
-        'PASSWORD':config('POSTGRES_PASSWORD',default='postgres'),
-        'HOST': config('POSTGRES_HOST', default='postgres'),
-        'PORT': config('POSTGRES_PORT',default='5432')
+        'NAME': os.getenv('POSTGRES_DB', 'postgres'),
+        'USER': os.getenv('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.getenv('POSTGRES_HOST', 'postgres'),
+        'PORT': os.getenv('POSTGRES_PORT', '5432')
     }
 }
 
@@ -125,6 +127,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
 }
 
 

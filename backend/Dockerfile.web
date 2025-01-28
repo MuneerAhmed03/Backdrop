@@ -21,7 +21,7 @@ COPY manage.py .
 COPY config ./config/
 COPY apps ./apps/
 
-# Runtime stage
+
 FROM python:3.11-slim
 
 WORKDIR /app

@@ -4,7 +4,8 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import AllowAny
 from .models import StockData
 from .utils import prepare_dict,prepare_list
-from decouple import config
+import os
+from dotenv import load_dotenv
 from .serializers import StockDataSerializer
 from django.contrib.postgres.search import  TrigramSimilarity
 from django.db.models import Q,  FloatField
@@ -42,12 +43,12 @@ def search(request):
 @permission_classes([AllowAny])
 def fetch_and_store_stock_data(request):
     try:
+        load_dotenv()
+        nse_dict = prepare_dict(os.getenv('names_url'), "SYMBOL", "NAME OF COMPANY", " DATE OF LISTING", "%d-%b-%Y")
+        etf_dict = prepare_dict(os.getenv('etf_url'), "Symbol", "SecurityName", "DateofListing", "%d-%b-%y")
 
-        nse_dict = prepare_dict(config('names_url'), "SYMBOL", "NAME OF COMPANY", " DATE OF LISTING", "%d-%b-%Y")
-        etf_dict=prepare_dict(config('etf_url'),"Symbol", "SecurityName", "DateofListing", "%d-%b-%y")
-
-        print(config('url'))
-        data = prepare_list(config('url'))
+        print(os.getenv('url'))
+        data = prepare_list(os.getenv('url'))
 
         for item in data:
             name = item.get("path", "")

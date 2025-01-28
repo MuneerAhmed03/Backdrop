@@ -119,13 +119,14 @@ class CodeExecutionView(APIView):
             logger.error(f"Service unavailable: {error_details}")
             return Response(error_details, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
-        code = request.data.get('code')
-        if not code:
+        backtest = request.data.get('backtest')
+        name = backtest.get("name")
+        logger.info(f"backtest request recieved {name}")
+        if not backtest:
             return Response({'error': 'missing code'}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
-            # Explicitly specify the queue
-            task = execute_code_task.apply_async(args=[code], queue='execution_queue')
+            task = execute_code_task.apply_async(kwargs={"backtest": backtest}, queue='execution_queue')
             logger.info(f'task scheduled {task} on execution_queue')
             return Response({
                 'task_id': task.id,
