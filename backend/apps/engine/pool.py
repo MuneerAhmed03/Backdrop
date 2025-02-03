@@ -5,6 +5,8 @@ from threading import Lock
 import docker
 import logging
 import json
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +14,7 @@ class ContainerPool:
     _instance = None
     _lock = Lock()
     _active_containers = set()
+    _executor = ThreadPoolExecutor(max_workers=4)
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -60,11 +63,27 @@ class ContainerPool:
             self._cleanup_tmpfs(tmpfs_path)
             raise
 
+    async def acquire_container_async(self):
+        def _acquire():
+            with self.lock:
+                container = self.pool.get(block=True, timeout=30)
+                container_info_json = json.dumps(container.attrs)
+                logger.info(f"container info {container_info_json}")
+                self._active_containers.add(container.id)
+                temp_dir = self.temp_dir_dict[container.id]
+                logger.info(f"Container {container.id} acquired")
+                return container, temp_dir
+
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(self._executor, _acquire)
+
     def acquire_container(self):
+        """Synchronous version maintained for backward compatibility"""
         with self.lock:
             container = self.pool.get(block=True, timeout=30)
             container_info_json = json.dumps(container.attrs)
-            print(f"container infor {container_info_json}")
+            print(f"container info {container_info_json}")
             self._active_containers.add(container.id)
             temp_dir = self.temp_dir_dict[container.id]
             logger.info(f"Container {container.id} acquired")

@@ -6,7 +6,8 @@ import numpy as np
 import logging
 import ast
 import json
-from strategy import BaseStrategy
+from datetime import datetime
+from strategy import BaseStrategy,StrategyResult,Trade
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,6 +59,20 @@ def load_data():
         logger.error(f"Data loading error: {str(e)}")
         sys.exit(2)
 
+class StrategyResultEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.int64): 
+            return int(obj)
+        if isinstance(obj, np.float64):
+            return float(obj)
+        if isinstance(obj, pd.Series):  
+            return obj.tolist()
+        if isinstance(obj, datetime):  
+            return obj.isoformat()
+        if isinstance(obj, Trade):  
+            return obj.__dict__
+        return super().default(obj)
+
 if __name__ == "__main__":
     try:
         logger.info("Starting execution of backtest code")
@@ -93,10 +108,12 @@ if __name__ == "__main__":
             results = strategy.run_backtest()
         except AttributeError:
             logger.error("Strategy does not have a 'run_backtest' method.")
-            sys.exit(1)
+            sys.exit(69)
 
         if isinstance(results, pd.DataFrame):
             result_json = results.to_json(orient="records")
+        elif isinstance(results, StrategyResult):
+            result_json = json.dumps(results.__dict__, cls=StrategyResultEncoder, indent=4)
         else:
             result_json = json.dumps(results)
         
