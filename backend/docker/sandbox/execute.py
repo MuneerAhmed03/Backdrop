@@ -6,6 +6,7 @@ import numpy as np
 import logging
 import ast
 import json
+from strategy import BaseStrategy
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,8 +37,6 @@ def load_data():
         
         code_path = '/host_tmpfs/code.py'  
         data_path = '/host_tmpfs/data.pkl'  
-
-        logger.info(f"Contents of /host_tmpfs: {os.listdir('/host_tmpfs')}")
 
         if not os.path.exists(code_path):
             logger.error(f"Code file not found: {code_path}")
@@ -78,20 +77,30 @@ if __name__ == "__main__":
         logger.info("Executing user-provided code")
         exec(code,None, local_env)
         
-        if 'run_backtest' not in local_env or not callable(local_env['run_backtest']):
-            raise ValueError("No valid 'run_backtest' function defined")
-
-        logger.info("Running backtest function")
-        execution_result = local_env['run_backtest'](df)
-
-        result = None
-
-        if isinstance(execution_result, pd.DataFrame):
-            result = execution_result.to_json(orient="records")
-        else:
-            result  = json.dumps(execution_result)
+        if 'generate_signals' not in local_env or not callable(local_env['generate_signals']):
+            raise ValueError("No valid 'generate_signals' function defined")
         
-        sys.stdout.write(json.dumps(result))
+        UserStrategy = type(
+            "UserStrategy",
+            (BaseStrategy,),
+            {"generate_signals": local_env['generate_signals']}
+        )
+
+        logger.info("Initializing user strategy with provided data")
+        strategy = UserStrategy(df)
+        logger.info("Running backtest")
+        try:
+            results = strategy.run_backtest()
+        except AttributeError:
+            logger.error("Strategy does not have a 'run_backtest' method.")
+            sys.exit(1)
+
+        if isinstance(results, pd.DataFrame):
+            result_json = results.to_json(orient="records")
+        else:
+            result_json = json.dumps(results)
+        
+        sys.stdout.write(result_json)
         sys.stdout.flush()
     except Exception as e:
         logger.error(f"Execution error: {str(e)}")

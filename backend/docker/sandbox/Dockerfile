@@ -19,5 +19,6 @@ RUN apt-get update && \
     useradd -m sandboxuser
 
 USER sandboxuser
+COPY strategy.py .
 COPY execute.py .
 CMD ["sleep", "infinity"]
