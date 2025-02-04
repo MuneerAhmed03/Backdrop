@@ -20,7 +20,7 @@ class CeleryConfig:
     task_max_retries = 3
     worker_send_task_events = True
     task_send_sent_event = True
-    worker_concurrency = int(os.getenv('CELERY_WORKER_CONCURRENCY', '2'))
+    worker_concurrency = int(os.getenv('CELERY_WORKER_CONCURRENCY', '1'))
 
     task_routes = {
         'apps.engine.tasks.execute_code_task': {'queue': 'execution_queue'},

@@ -71,12 +71,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3001",  
-    "https://yourfrontenddomain.com", 
-    "http://localhost:3000",
-    "http://localhost:3002",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3001",  
+#     "https://yourfrontenddomain.com", 
+#     "http://localhost:3000",
+#     "http://localhost:3002",
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True
 

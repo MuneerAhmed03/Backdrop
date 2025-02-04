@@ -67,8 +67,6 @@ class ContainerPool:
         def _acquire():
             with self.lock:
                 container = self.pool.get(block=True, timeout=30)
-                container_info_json = json.dumps(container.attrs)
-                logger.info(f"container info {container_info_json}")
                 self._active_containers.add(container.id)
                 temp_dir = self.temp_dir_dict[container.id]
                 logger.info(f"Container {container.id} acquired")
@@ -82,8 +80,6 @@ class ContainerPool:
         """Synchronous version maintained for backward compatibility"""
         with self.lock:
             container = self.pool.get(block=True, timeout=30)
-            container_info_json = json.dumps(container.attrs)
-            print(f"container info {container_info_json}")
             self._active_containers.add(container.id)
             temp_dir = self.temp_dir_dict[container.id]
             logger.info(f"Container {container.id} acquired")
