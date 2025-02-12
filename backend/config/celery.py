@@ -2,6 +2,9 @@ import os
 import time
 import logging
 from celery import Celery
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -8,6 +8,7 @@ import ast
 import json
 from datetime import datetime
 from strategy import BaseStrategy,StrategyResult,Trade
+import warnings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,6 +20,11 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+def warning_handler(message, category, filename, lineno, file=None, line=None):
+    stderr_messages.append(f"{category.__name__}: {message}")
+
+warnings.showwarning = warning_handler
+
 class SafeCodeVisitor(ast.NodeVisitor):
     def visit_Import(self, node):
         raise ValueError("Import statements are not allowed")
@@ -27,7 +33,7 @@ class SafeCodeVisitor(ast.NodeVisitor):
     def visit_Call(self, node):
         if isinstance(node.func, ast.Name) and node.func.id in {"exec", "eval", "open"}:
             raise ValueError(f"Call to '{node.func.id}' is not allowed")
-        self.generic_visit(node)
+        self.generic_visit(node) 
 
 def validate_user_code(code):
     tree = ast.parse(code)
@@ -74,6 +80,7 @@ class StrategyResultEncoder(json.JSONEncoder):
         return super().default(obj)
 
 if __name__ == "__main__":
+    stderr_messages = []  # To collect warning messages
     try:
         logger.info("Starting execution of backtest code")
         code, df = load_data()
@@ -102,23 +109,70 @@ if __name__ == "__main__":
         )
 
         logger.info("Initializing user strategy with provided data")
-        strategy = UserStrategy(df)
+        try: 
+            loss_cutting_strategy = UserStrategy(
+                df.copy(),
+                trading_method=0
+            )
+            risk_reduction_strategy = UserStrategy(
+                df.copy(),
+                trading_method=1
+            )
+            logger.info(f"Has run_backtest? {'run_backtest' in dir(loss_cutting_strategy)}")
+            
+            # Debug logging for risk_reduction_strategy
+            logger.info(f"Has run_backtest? {'run_backtest' in dir(risk_reduction_strategy)}")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize strategy: {str(e)}")
+            raise
+
         logger.info("Running backtest")
         try:
-            results = strategy.run_backtest()
-        except AttributeError:
-            logger.error("Strategy does not have a 'run_backtest' method.")
+            logger.info("About to run backtest for loss cutting strategy")
+            loss_cutting_results = loss_cutting_strategy.run_backtest()
+            logger.info("Loss cutting backtest completed")
+            
+            logger.info("About to run backtest for risk reduction strategy")
+            risk_reduction_results = risk_reduction_strategy.run_backtest()
+            logger.info("Risk reduction backtest completed")
+            
+            logger.info("Backtest completed successfully")
+            
+            # Prepare the complete output including results and any warnings
+            output = {
+                "success": True,
+                "results": {
+                    "loss_cutting": loss_cutting_results.__dict__,
+                    "risk_reduction": risk_reduction_results.__dict__
+                },
+                "warnings": stderr_messages if stderr_messages else None
+            }
+
+            # Use the custom encoder to serialize the results
+            result_json = json.dumps(output, cls=StrategyResultEncoder, indent=4)
+            sys.stdout.write(result_json)
+            sys.stdout.flush()
+
+        except AttributeError as e:
+            logger.error(f"Strategy does not have a 'run_backtest' method. Error: {str(e)}")
+            logger.error(f"Available methods: {dir(loss_cutting_strategy)}")
+            error_output = {
+                "success": False,
+                "error": str(e),
+                "warnings": stderr_messages if stderr_messages else None
+            }
+            sys.stdout.write(json.dumps(error_output))
+            sys.stdout.flush()
             sys.exit(69)
 
-        if isinstance(results, pd.DataFrame):
-            result_json = results.to_json(orient="records")
-        elif isinstance(results, StrategyResult):
-            result_json = json.dumps(results.__dict__, cls=StrategyResultEncoder, indent=4)
-        else:
-            result_json = json.dumps(results)
-        
-        sys.stdout.write(result_json)
-        sys.stdout.flush()
     except Exception as e:
         logger.error(f"Execution error: {str(e)}")
+        error_output = {
+            "success": False,
+            "error": str(e),
+            "warnings": stderr_messages if stderr_messages else None
+        }
+        sys.stdout.write(json.dumps(error_output))
+        sys.stdout.flush()
         sys.exit(1)
