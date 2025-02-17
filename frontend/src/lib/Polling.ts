@@ -1,6 +1,6 @@
 export async function executeCode(code: string, name: string) {
   try {
-    const response = await fetch("http://localhost:8000/engine/execute/", {
+    const response = await fetch("http://localhost:8001/engine/execute/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -20,7 +20,7 @@ export async function executeCode(code: string, name: string) {
 }
 
 async function pollTaskStatus(status_url: string) {
-  const poll_url = `http://localhost:8000${status_url}`;
+  const poll_url = `http://localhost:8001${status_url}`;
 
   while (true) {
     const response = await fetch(poll_url);
@@ -35,6 +35,7 @@ async function pollTaskStatus(status_url: string) {
       console.log(`Task result: ${data}`);
       break;
     } else {
+      console.log(`Task status: ${data}`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }

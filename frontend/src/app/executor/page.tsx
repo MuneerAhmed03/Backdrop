@@ -8,6 +8,7 @@ import { BookOpen, ChevronRight, Settings2 } from "lucide-react";
 import SearchBar from "@/components/executor/SearchBar";
 import { executeCode } from "@/lib/Polling";
 import { StockDataResponse } from "@/lib/types";
+import Result from "@/components/results/Result";
 
 const DEFAULT_CODE = `
   def backtest(data):
@@ -83,8 +84,7 @@ export default function Executor() {
   }, [isResizing, handleMouseMove]);
 
   const handleRunStrategy = async () => {
-    // TODO: Implement strategy execution
-    executeCode(code, "20microns");
+    executeCode(code, instrument?.symbol || "20microns");
   };
 
   return (
@@ -129,7 +129,10 @@ export default function Executor() {
                 <label className="block text-sm font-medium mb-2">
                   Intrument
                 </label>
-                <SearchBar onSelectItem={setInstrument} />
+                <SearchBar
+                  onSelectItem={setInstrument}
+                  selectedItem={instrument}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -173,6 +176,7 @@ export default function Executor() {
         isOpen={showTemplates}
         onClose={() => setShowTemplates(false)}
       />
+      <Result />
     </div>
   );
 }
