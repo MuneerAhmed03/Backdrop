@@ -70,27 +70,26 @@ export default function SearchBar({
           placeholder="Search Instrument"
           value={query}
           onChange={handleInputChange}
-          className="w-full input"
+          className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
         />
         {isLoading && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <Loader2 className="h-4 w-4 animate-spin text-[var(--foreground-subtle)]" />
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         )}
         {results.length > 0 && (
           <ul
-            className="absolute left-0 my-2 w-full bg-[#1e2533] border border-[var(--border-hover)] 
-               shadow-[var(--shadow-md)] rounded-lg z-50"
+            className="absolute left-0 my-2 w-full bg-card border border-border 
+               shadow-lg rounded-lg z-50 divide-y divide-border"
           >
             {results.map((result, index) => (
               <li
                 key={index}
-                className="p-2 hover:bg-[var(--card-hover)] cursor-pointer rounded-lg transition-colors duration-200 text-sm"
+                className="p-3 hover:bg-accent/50 cursor-pointer transition-colors text-sm"
                 onClick={() => handleSelectItem(result)}
               >
-                <span className="text-[var(--foreground)]">
-                  {result.symbol} - {result.stock_name}
-                </span>
+                <span className="font-medium">{result.symbol}</span>
+                <span className="text-muted-foreground"> - {result.stock_name}</span>
               </li>
             ))}
           </ul>

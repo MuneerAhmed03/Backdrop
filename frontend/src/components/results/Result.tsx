@@ -1,103 +1,218 @@
-import React from "react";
-import {
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  Banknote,
-  Target,
-  LineChart,
-} from "lucide-react";
-import { StatCard } from "./StatCard";
-import { MetricsGrid } from "./MetricsGrid";
-import { PerformanceCharts } from "./PerformanceCharts";
-import { mockData } from "./mockData";
+import { useRef, useState } from "react";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { generateDummyData } from "./mockData";
+import { StrategyResult } from "@/lib/types"
+import { formatNumber } from "@/lib/utils";
 
-export const Result: React.FC = () => {
-  const isPositiveReturn = mockData.totalReturn > 0;
+const data = generateDummyData();
 
-  const headerStats = [
-    {
-      title: "Final Capital",
-      value: mockData.finalCapital,
-      icon: TrendingUp,
-      iconBgColor: "bg-indigo-500/10",
-      iconColor: "text-indigo-400",
-      valueColor: "text-indigo-400",
-      prefix: "$",
-    },
-    {
-      title: "Total Return",
-      value: mockData.totalReturnPct.toFixed(2),
-      icon: isPositiveReturn ? ArrowUpRight : ArrowDownRight,
-      iconBgColor: isPositiveReturn ? "bg-emerald-500/10" : "bg-red-500/10",
-      iconColor: isPositiveReturn ? "text-emerald-400" : "text-red-400",
-      valueColor: isPositiveReturn ? "text-emerald-400" : "text-red-400",
-      prefix: isPositiveReturn ? "+" : "",
-      suffix: "%",
-    },
-    {
-      title: "Max Drawdown",
-      value: mockData.maxDrawdownPct.toFixed(2),
-      icon: ArrowDownRight,
-      iconBgColor: "bg-red-500/10",
-      iconColor: "text-red-400",
-      valueColor: "text-red-400",
-      prefix: "-",
-      suffix: "%",
-    },
-  ];
+const formatters = {
+  currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
+  percent: new Intl.NumberFormat('en-US', { style: 'percent', minimumFractionDigits: 2 }),
+  decimal: new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
+};
 
-  const riskMetrics = [
-    { label: "Sharpe Ratio", value: mockData.sharpeRatio },
-    { label: "Sortino Ratio", value: mockData.sortinoRatio },
-    {
-      label: "Annualized Volatility",
-      value: mockData.annualizedVolatility,
-      suffix: "%",
-    },
-  ];
+const ratioDescriptions = {
+  sharpeRatio: "Measures risk-adjusted returns using the risk-free rate and standard deviation of returns",
+  calmarRatio: "Compares average annual compounded returns to maximum drawdown risk",
+  sortinoRatio: "Similar to Sharpe ratio but only considers downside volatility",
+  profitFactor: "Ratio of gross profits to gross losses"
+};
 
-  const performanceMetrics = [
-    { label: "Calmar Ratio", value: mockData.calmarRatio },
-    { label: "Profit Factor", value: mockData.profitFactor },
-    { label: "Win Rate", value: mockData.winRate * 100, suffix: "%" },
-  ];
+const RatioCard = ({ label, value, description }: { label: string; value: number; description: string }) => (
+  <div className="group relative metric-card">
+    <div className="text-sm text-gray-400">{label}</div>
+    <div className="text-xl font-semibold">{formatters.decimal.format(value)}</div>
+    <div className="ratio-tooltip">
+      {description}
+    </div>
+  </div>
+);
 
-  const tradingStats = [
-    { label: "Number of Trades", value: mockData.numTrades },
-    { label: "Avg Trade P&L", value: mockData.avgTradePnl, prefix: "$" },
-    { label: "Avg Winner", value: mockData.avgWinnerPnl, prefix: "$" },
-    { label: "Avg Loser", value: mockData.avgLoserPnl, prefix: "$" },
-  ];
+const Index = () => {
+  const [syncedTooltipIndex, setSyncedTooltipIndex] = useState<number | null>(null);
+  const equityChartRef = useRef<any>(null);
+  const drawdownChartRef = useRef<any>(null);
+
+  const chartData = data.equityCurve.map((equity, index) => ({
+    date: new Date(2023, 0, index).toLocaleDateString(),
+    equity,
+    drawdown: data.drawdownCurve[index]
+  }));
+
+  const handleMouseMove = (ref: any) => (props: any) => {
+    if (props.activeTooltipIndex !== syncedTooltipIndex) {
+      setSyncedTooltipIndex(props.activeTooltipIndex);
+      
+      if (ref.current) {
+        const chart = ref.current;
+        if (chart.state && props.activeTooltipIndex !== null) {
+          chart.state.activeTooltipIndex = props.activeTooltipIndex;
+          chart.forceUpdate();
+        }
+      }
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 p-8">
-      <div className="max-w-[1400px] mx-auto space-y-8">
-        {/* Header Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {headerStats.map((stat) => (
-            <StatCard key={stat.title} {...stat} />
-          ))}
+    <div className="min-h-screen bg-background text-foreground p-6 animate-fadeIn">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header with Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slideUp">
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Initial Capital</div>
+            <div className="text-xl font-semibold">
+              {formatNumber(data.initialCapital, { style: 'currency', currency: 'USD' })}
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Final Capital</div>
+            <div className="text-2xl font-bold text-profit">
+              {formatNumber(data.finalCapital, { style: 'currency', currency: 'USD' })}
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Total Return</div>
+            <div className={`text-xl font-semibold ${data.totalReturn >= 0 ? 'text-profit' : 'text-loss'}`}>
+              {formatNumber(data.totalReturn, { style: 'currency', currency: 'USD' })}
+              <span className="text-sm ml-2">
+                ({formatters.percent.format(data.totalReturnPct / 100)})
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Charts */}
-        <PerformanceCharts
-          equityCurve={mockData.equityCurve}
-          drawdownCurve={mockData.drawdownCurve}
-        />
+        {/* Charts - Now horizontal on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-64 glassmorphism p-4 rounded-lg">
+            <ResponsiveContainer>
+              <AreaChart
+                data={chartData}
+                onMouseMove={handleMouseMove(drawdownChartRef)}
+                ref={equityChartRef}
+              >
+                <defs>
+                  <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
+                <XAxis dataKey="date" stroke="#6B7280" />
+                <YAxis 
+                  stroke="#6B7280"
+                  tickFormatter={(value) => formatNumber(value, { style: 'currency', currency: 'USD' })}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(0, 0, 0, 0.9)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                  }}
+                  formatter={(value: any) => [
+                    formatNumber(value, { style: 'currency', currency: 'USD' }),
+                    "Equity"
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="equity"
+                  stroke="#6366F1"
+                  fill="url(#equityGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <MetricsGrid title="Risk Metrics" metrics={riskMetrics} />
-          <MetricsGrid
-            title="Performance Metrics"
-            metrics={performanceMetrics}
+          <div className="h-64 glassmorphism p-4 rounded-lg">
+            <ResponsiveContainer>
+              <AreaChart
+                data={chartData}
+                onMouseMove={handleMouseMove(equityChartRef)}
+                ref={drawdownChartRef}
+              >
+                <defs>
+                  <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
+                <XAxis dataKey="date" stroke="#6B7280" />
+                <YAxis 
+                  stroke="#6B7280"
+                  tickFormatter={(value) => `${value}%`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(0, 0, 0, 0.9)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                  }}
+                  formatter={(value: any) => [
+                    `${value.toFixed(2)}%`,
+                    "Drawdown"
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="drawdown"
+                  stroke="#EF4444"
+                  fill="url(#drawdownGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Performance Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <RatioCard
+            label="Sharpe Ratio"
+            value={data.sharpeRatio}
+            description={ratioDescriptions.sharpeRatio}
           />
-          <MetricsGrid title="Trading Statistics" metrics={tradingStats} />
+          <RatioCard
+            label="Calmar Ratio"
+            value={data.calmarRatio}
+            description={ratioDescriptions.calmarRatio}
+          />
+          <RatioCard
+            label="Sortino Ratio"
+            value={data.sortinoRatio}
+            description={ratioDescriptions.sortinoRatio}
+          />
+          <RatioCard
+            label="Profit Factor"
+            value={data.profitFactor}
+            description={ratioDescriptions.profitFactor}
+          />
+        </div>
+
+        {/* Additional Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Win Rate</div>
+            <div className="text-xl font-semibold">{formatters.percent.format(data.winRate / 100)}</div>
+          </div>
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Max Drawdown</div>
+            <div className="text-xl font-semibold text-loss">
+              {formatters.percent.format(data.maxDrawdownPct / 100)}
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Total Trades</div>
+            <div className="text-xl font-semibold">{formatNumber(data.numTrades)}</div>
+          </div>
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Avg Trade P&L</div>
+            <div className={`text-xl font-semibold ${data.avgTradePnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+              {formatNumber(data.avgTradePnl, { style: 'currency', currency: 'USD' })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default Result;
+export default Index;

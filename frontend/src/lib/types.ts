@@ -6,3 +6,38 @@ export interface StockDataResponse {
   stock_name: string | null;
   isEtf: boolean;
 }
+
+
+
+export type Trade = {
+  entryDate: string;
+  exitDate: string;
+  entryPrice: number;
+  exitPrice: number;
+  quantity: number;
+  side: string;
+  pnl: number;
+  exitReason: string;
+};
+
+export type StrategyResult = {
+  initialCapital: number;
+  finalCapital: number;
+  equityCurve: number[];
+  drawdownCurve: number[];
+  trades: Trade[];
+  totalReturn: number;
+  totalReturnPct: number;
+  sharpeRatio: number;
+  maxDrawdown: number;
+  maxDrawdownPct: number;
+  winRate: number;
+  profitFactor: number;
+  numTrades: number;
+  avgTradePnl: number;
+  avgWinnerPnl: number;
+  avgLoserPnl: number;
+  annualizedVolatility: number;
+  calmarRatio: number;
+  sortinoRatio: number;
+};

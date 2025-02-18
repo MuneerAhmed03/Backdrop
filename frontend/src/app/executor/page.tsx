@@ -8,7 +8,7 @@ import { BookOpen, ChevronRight, Settings2 } from "lucide-react";
 import SearchBar from "@/components/executor/SearchBar";
 import { executeCode } from "@/lib/Polling";
 import { StockDataResponse } from "@/lib/types";
-import Result from "@/components/results/Result";
+
 
 const DEFAULT_CODE = `
   def backtest(data):
@@ -88,7 +88,7 @@ export default function Executor() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[var(--background)] to-[var(--background-subtle)]">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-background/80">
       <Header
         onRunStrategy={handleRunStrategy}
         onShowTemplates={() => setShowTemplates(true)}
@@ -96,7 +96,7 @@ export default function Executor() {
 
       <div className="flex-1 flex mt-16">
         <div className="flex-1 p-4 min-w-0">
-          <div className="w-full h-full rounded-2xl border border-[var(--border)] bg-[var(--card)] backdrop-blur-xl overflow-hidden shadow-[var(--shadow-lg)]">
+          <div className="w-full h-full  bg-card/80 backdrop-blur-xl overflow-hidden shadow-lg">
             <CodeEditor value={code} onChange={setCode} />
           </div>
         </div>
@@ -105,18 +105,18 @@ export default function Executor() {
 
         <div
           style={{ width: showParameters ? panelWidth : 0 }}
-          className={`border-l border-[var(--border)] bg-[var(--card)] backdrop-blur-xl transition-all duration-300 ease-in-out ${
+          className={`border-l border-border bg-card/80 backdrop-blur-xl transition-all duration-300 ease-in-out ${
             showParameters ? "translate-x-0" : "translate-x-full"
           } ${isResizing ? "transition-none" : ""}`}
         >
-          <div className="h-12 border-b border-[var(--border)] flex items-center justify-between px-4">
+          <div className="h-12 border-b border-border flex items-center justify-between px-4">
             <div className="flex items-center">
-              <Settings2 className="w-4 h-4 mr-2 text-[var(--foreground-subtle)]" />
+              <Settings2 className="w-4 h-4 mr-2 text-muted-foreground" />
               <span className="font-medium">Parameters</span>
             </div>
             <button
               onClick={() => setShowParameters(!showParameters)}
-              className="btn-ghost p-1 hover:bg-[var(--card-hover)] rounded-lg"
+              className="hover:bg-accent/50 p-1 rounded-lg transition-colors"
             >
               <ChevronRight
                 className={`w-4 h-4 transition-transform duration-200 ${showParameters ? "rotate-180" : ""}`}
@@ -126,8 +126,8 @@ export default function Executor() {
           <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-8rem)]">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Intrument
+                <label className="block text-sm font-medium mb-2 text-foreground/80">
+                  Instrument
                 </label>
                 <SearchBar
                   onSelectItem={setInstrument}
@@ -135,10 +135,10 @@ export default function Executor() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground/80">
                   Time Period
                 </label>
-                <select className="input">
+                <select className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors">
                   <option>Last 1 Year</option>
                   <option>Last 2 Years</option>
                   <option>Last 5 Years</option>
@@ -146,23 +146,23 @@ export default function Executor() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground/80">
                   Initial Capital
                 </label>
                 <input
                   type="number"
-                  className="input"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
                   placeholder="Enter amount"
                   defaultValue={100000}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground/80">
                   Risk Per Trade (%)
                 </label>
                 <input
                   type="number"
-                  className="input"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
                   placeholder="Enter percentage"
                   defaultValue={1}
                 />
@@ -176,7 +176,7 @@ export default function Executor() {
         isOpen={showTemplates}
         onClose={() => setShowTemplates(false)}
       />
-      <Result />
+
     </div>
   );
 }

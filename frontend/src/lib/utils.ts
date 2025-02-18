@@ -6,3 +6,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 
+
+export const formatNumber = (value: number, options: Intl.NumberFormatOptions = {}) => {
+  if (Math.abs(value) >= 1000000) {
+    return new Intl.NumberFormat('en-US', {
+      ...options,
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
+    }).format(value);
+  }
+  return new Intl.NumberFormat('en-US', options).format(value);
+};

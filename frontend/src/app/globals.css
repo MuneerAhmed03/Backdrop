@@ -2,185 +2,149 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* New refined color palette */
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-foreground: #ffffff;
-
-  --background: #0a0f1a;
-  --background-subtle: #151b27;
-  --background-translucent: rgba(10, 15, 26, 0.8);
-
-  --foreground: #f8fafc;
-  --foreground-subtle: #94a3b8;
-
-  --card: rgba(23, 29, 41, 0.5);
-  --card-hover: rgba(30, 38, 54, 0.5);
-  --card-glow: rgba(59, 130, 246, 0.15);
-
-  --border: rgba(148, 163, 184, 0.1);
-  --border-hover: rgba(148, 163, 184, 0.2);
-
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 25px var(--card-glow);
-}
-
+/* Base Layer */
 @layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+  
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+  
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+  
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+  
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+  
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+  
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+  
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
   body {
-    argin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    @apply bg-[var(--background)] text-[var(--foreground)] antialiased min-h-screen;
-    background: radial-gradient(
-        ellipse at top,
-        rgba(59, 130, 246, 0.02) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse at bottom,
-        rgba(59, 130, 246, 0.02) 0%,
-        transparent 50%
-      ),
-      linear-gradient(
-        180deg,
-        var(--background) 0%,
-        var(--background-subtle) 100%
-      );
-    background-attachment: fixed;
+    @apply bg-background text-foreground;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply text-[var(--foreground)] font-semibold tracking-tight;
+  /* Custom Scrollbar Styles */
+  ::-webkit-scrollbar {
+    @apply w-2;
   }
 
-  p {
-    @apply text-[var(--foreground-subtle)] leading-relaxed;
-  }
-}
-
-.recharts-tooltip-wrapper {
-  outline: none !important;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(31, 41, 55, 0.5);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.5);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 114, 128, 0.5);
-}
-
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 
-           disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2
-           backdrop-blur-sm;
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
   }
 
-  .btn-primary {
-    @apply btn bg-[var(--primary)] text-[var(--primary-foreground)] 
-           hover:bg-[var(--primary-hover)] hover:shadow-[var(--shadow-glow)]
-           focus-visible:ring-[var(--primary)]
-           shadow-[var(--shadow-sm)];
+  ::-webkit-scrollbar-thumb {
+    @apply bg-accent/50 rounded-full transition-colors hover:bg-accent/70;
   }
 
-  .btn-secondary {
-    @apply btn bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--card-hover)]
-           border border-[var(--border)] hover:border-[var(--border-hover)]
-           shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)];
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--accent)) transparent;
   }
 
-  .btn-ghost {
-    @apply btn text-[var(--foreground)] hover:bg-[var(--card)]
-           hover:text-[var(--foreground)] hover:shadow-[var(--shadow-sm)];
+  /* Hide scrollbar for Chrome, Safari and Opera when not hovering */
+  .hide-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-transparent;
   }
 
-  .card {
-    @apply rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6
-           backdrop-blur-md transition-all duration-200
-           hover:shadow-[var(--shadow-lg)] hover:border-[var(--border-hover)]
-           hover:bg-[var(--card-hover)];
+  .hide-scrollbar:hover::-webkit-scrollbar-thumb {
+    @apply bg-accent/50;
   }
 
-  .input {
-    @apply flex h-10 w-full rounded-xl border border-[var(--border)]
-           bg-[var(--card)] px-3 py-2 text-sm text-[var(--foreground)]
-           placeholder:text-[var(--foreground-subtle)] focus:outline-none focus:ring-2
-           focus:ring-[var(--primary)] focus:border-[var(--border-hover)]
-           disabled:opacity-50 transition-all duration-200
-           backdrop-blur-md shadow-[var(--shadow-sm)];
+  /* Thin scrollbar variant */
+  .thin-scrollbar::-webkit-scrollbar {
+    @apply w-1.5;
   }
 
-  .badge {
-    @apply inline-flex items-center rounded-full border border-[var(--border)]
-           px-2.5 py-0.5 text-xs font-semibold transition-colors
-           focus:outline-none focus:ring-2 focus:ring-[var(--primary)]
-           bg-[var(--card)] backdrop-blur-md;
-  }
-
-  .glass-panel {
-    @apply bg-[var(--card)] backdrop-blur-xl border border-[var(--border)]
-           rounded-2xl shadow-[var(--shadow-lg)];
-  }
-
-  /* Resizable panel styles */
-  .resizer {
-    @apply flex-none w-1.5 hover:w-2 bg-[var(--border)] hover:bg-[var(--primary)] 
-           cursor-col-resize transition-all duration-150
-           active:bg-[var(--primary)] active:w-2
-           after:content-[''] after:absolute after:left-[-4px] after:right-[-4px] 
-           after:top-0 after:bottom-0 after:z-10 relative;
-  }
-
-  .section-transition {
-    @apply relative before:absolute before:inset-0 before:bg-gradient-to-b 
-           before:from-transparent before:to-[var(--background)] before:h-32 
-           before:bottom-full before:-mb-px;
+  /* Dark scrollbar variant */
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted hover:bg-muted/70;
   }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  @apply w-1.5;
+/* Utility Classes */
+.glassmorphism {
+  @apply backdrop-blur-lg bg-black/30 border border-white/10;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
+.chart-tooltip {
+  @apply absolute px-3 py-2 text-sm bg-black/90 border border-white/20 rounded-lg shadow-lg pointer-events-none transition-opacity duration-300;
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-[var(--border)] hover:bg-[var(--border-hover)] rounded-full transition-colors duration-150;
+.metric-card {
+  @apply glassmorphism p-4 rounded-lg transition-all duration-300 hover:bg-black/40;
 }
+
+.ratio-tooltip {
+  @apply invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 w-48 p-2 text-sm bg-black/90 border border-white/20 rounded-lg mb-2;
+}
+
+/* Styles from app.css */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
 
 /* Monaco Editor customization */
 .monaco-editor {
@@ -188,7 +152,3 @@
   --vscode-editor-foreground: var(--foreground) !important;
 }
 
-/* Backdrop blur for modals */
-.modal-backdrop {
-  @apply bg-[var(--background-translucent)] backdrop-blur-md;
-}
