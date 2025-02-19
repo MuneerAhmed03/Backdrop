@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState,useEffect } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { generateDummyData } from "./mockData";
 import { StrategyResult } from "@/lib/types"
@@ -29,16 +29,38 @@ const RatioCard = ({ label, value, description }: { label: string; value: number
   </div>
 );
 
+const SkeletonCard = () => (
+  <div className="metric-card animate-pulse">
+    <div className="h-4 w-24 bg-gray-700/50 rounded mb-2"></div>
+    <div className="h-6 w-32 bg-gray-700/50 rounded"></div>
+  </div>
+);
+
+const SkeletonChart = () => (
+  <div className="h-64 glassmorphism p-4 rounded-lg animate-pulse">
+    <div className="w-full h-full bg-gray-700/50 rounded"></div>
+  </div>
+);
+
 const Index = () => {
   const [syncedTooltipIndex, setSyncedTooltipIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [chartData, setChartData] = useState<any[]>([]);
   const equityChartRef = useRef<any>(null);
   const drawdownChartRef = useRef<any>(null);
 
-  const chartData = data.equityCurve.map((equity, index) => ({
-    date: new Date(2023, 0, index).toLocaleDateString(),
-    equity,
-    drawdown: data.drawdownCurve[index]
-  }));
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setChartData(data.equityCurve.map((equity, index) => ({
+        date: new Date(2023, 0, index).toLocaleDateString(),
+        equity,
+        drawdown: data.drawdownCurve[index]
+      })));
+      setIsLoading(false);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleMouseMove = (ref: any) => (props: any) => {
     if (props.activeTooltipIndex !== syncedTooltipIndex) {
@@ -54,10 +76,39 @@ const Index = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground p-6 animate-fadeIn">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SkeletonChart />
+            <SkeletonChart />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground p-6 animate-fadeIn">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header with Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slideUp">
           <div className="metric-card">
             <div className="text-sm text-gray-400">Initial Capital</div>
@@ -67,7 +118,7 @@ const Index = () => {
           </div>
           <div className="metric-card">
             <div className="text-sm text-gray-400">Final Capital</div>
-            <div className="text-2xl font-bold text-profit">
+            <div className={`text-2xl font-bold text-profit`}>
               {formatNumber(data.finalCapital, { style: 'currency', currency: 'USD' })}
             </div>
           </div>
@@ -81,8 +132,6 @@ const Index = () => {
             </div>
           </div>
         </div>
-
-        {/* Charts - Now horizontal on desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="h-64 glassmorphism p-4 rounded-lg">
             <ResponsiveContainer>
@@ -122,7 +171,6 @@ const Index = () => {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-
           <div className="h-64 glassmorphism p-4 rounded-lg">
             <ResponsiveContainer>
               <AreaChart
@@ -162,8 +210,6 @@ const Index = () => {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Performance Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <RatioCard
             label="Sharpe Ratio"
@@ -186,8 +232,6 @@ const Index = () => {
             description={ratioDescriptions.profitFactor}
           />
         </div>
-
-        {/* Additional Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="metric-card">
             <div className="text-sm text-gray-400">Win Rate</div>

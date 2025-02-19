@@ -15,7 +15,7 @@ export async function executeCode(code: string, name: string) {
     const { task_id, status_url } = await response.json();
     console.log(`Task ID: ${task_id}`);
 
-    await pollTaskStatus(status_url);
+    return await pollTaskStatus(status_url);
   } catch (error) { }
 }
 
@@ -30,10 +30,10 @@ async function pollTaskStatus(status_url: string) {
     }
     const data = await response.json();
 
-    if (data.status === "completed" || data.status === "error") {
-      console.log(`Task status: ${data}`);
-      console.log(`Task result: ${data}`);
-      break;
+    if (data.status === "completed") {
+      return data.result;
+    }else if( data.status === "error" ){
+      return data.error;
     } else {
       console.log(`Task status: ${data}`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
