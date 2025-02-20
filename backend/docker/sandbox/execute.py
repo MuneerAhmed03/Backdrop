@@ -7,18 +7,19 @@ import logging
 import ast
 import json
 from datetime import datetime
-from strategy import BaseStrategy,StrategyResult,Trade
+from strategy import BaseStrategy, Trade
 import warnings
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.StreamHandler(sys.stdout),
+        logging.StreamHandler(sys.stderr),
     ]
 )
 
 logger = logging.getLogger(__name__)
+logger.propagate = False;
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):
     stderr_messages.append(f"{category.__name__}: {message}")
@@ -80,7 +81,7 @@ class StrategyResultEncoder(json.JSONEncoder):
         return super().default(obj)
 
 if __name__ == "__main__":
-    stderr_messages = []  # To collect warning messages
+    stderr_messages = []  
     try:
         logger.info("Starting execution of backtest code")
         code, df = load_data()
@@ -120,7 +121,7 @@ if __name__ == "__main__":
             )
             logger.info(f"Has run_backtest? {'run_backtest' in dir(loss_cutting_strategy)}")
             
-            # Debug logging for risk_reduction_strategy
+            
             logger.info(f"Has run_backtest? {'run_backtest' in dir(risk_reduction_strategy)}")
 
         except Exception as e:
@@ -139,9 +140,8 @@ if __name__ == "__main__":
             
             logger.info("Backtest completed successfully")
             
-            # Prepare the complete output including results and any warnings
+            
             output = {
-                "success": True,
                 "results": {
                     "loss_cutting": loss_cutting_results.__dict__,
                     "risk_reduction": risk_reduction_results.__dict__
@@ -149,7 +149,6 @@ if __name__ == "__main__":
                 "warnings": stderr_messages if stderr_messages else None
             }
 
-            # Use the custom encoder to serialize the results
             result_json = json.dumps(output, cls=StrategyResultEncoder, indent=4)
             sys.stdout.write(result_json)
             sys.stdout.flush()
@@ -158,7 +157,6 @@ if __name__ == "__main__":
             logger.error(f"Strategy does not have a 'run_backtest' method. Error: {str(e)}")
             logger.error(f"Available methods: {dir(loss_cutting_strategy)}")
             error_output = {
-                "success": False,
                 "error": str(e),
                 "warnings": stderr_messages if stderr_messages else None
             }
@@ -169,7 +167,6 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Execution error: {str(e)}")
         error_output = {
-            "success": False,
             "error": str(e),
             "warnings": stderr_messages if stderr_messages else None
         }

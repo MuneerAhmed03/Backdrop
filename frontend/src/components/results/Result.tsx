@@ -1,10 +1,7 @@
-import { useRef, useState,useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { generateDummyData } from "./mockData";
 import { StrategyResult } from "@/lib/types"
 import { formatNumber } from "@/lib/utils";
-
-const data = generateDummyData();
 
 const formatters = {
   currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
@@ -42,25 +39,26 @@ const SkeletonChart = () => (
   </div>
 );
 
-const Index = () => {
+interface ResultProps {
+  data: StrategyResult | null;
+  isLoading: boolean;
+}
+
+const Index = ({ data, isLoading }: ResultProps) => {
   const [syncedTooltipIndex, setSyncedTooltipIndex] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [chartData, setChartData] = useState<any[]>([]);
   const equityChartRef = useRef<any>(null);
   const drawdownChartRef = useRef<any>(null);
+  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (data) {
       setChartData(data.equityCurve.map((equity, index) => ({
         date: new Date(2023, 0, index).toLocaleDateString(),
         equity,
         drawdown: data.drawdownCurve[index]
       })));
-      setIsLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [data]);
 
   const handleMouseMove = (ref: any) => (props: any) => {
     if (props.activeTooltipIndex !== syncedTooltipIndex) {
@@ -76,7 +74,7 @@ const Index = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
       <div className="min-h-screen bg-background text-foreground p-6 animate-fadeIn">
         <div className="max-w-7xl mx-auto space-y-6">

@@ -33,6 +33,8 @@ class CeleryConfig:
         'apps.engine.tasks',
     )
 
+    broker_transport_options = {'socket_keepalive': True}
+
 app.config_from_object(CeleryConfig)
 
 if os.getenv('USE_DJANGO', 'true').lower() == 'true':

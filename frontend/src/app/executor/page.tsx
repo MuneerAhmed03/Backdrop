@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { CodeEditor } from "@/components/executor/CodeEditor";
 import { Header } from "@/components/executor/Header";
 import { TemplatesModal } from "@/components/executor/Templates";
 import { BookOpen, ChevronRight, Settings2 } from "lucide-react";
 import SearchBar from "@/components/executor/SearchBar";
-import { executeCode } from "@/lib/Polling";
+import useCodeExecution  from "@/lib/Polling";
 import { StockDataResponse } from "@/lib/types";
+import Result from "@/components/results/Result"
 
 
 const DEFAULT_CODE = `
@@ -38,10 +39,11 @@ export default function Executor() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showParameters, setShowParameters] = useState(true);
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [result, setResult] = useState<string | null>(null);
   const [panelWidth, setPanelWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const [instrument, setInstrument] = useState<StockDataResponse | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const {executeCode, isLoading, result, error} = useCodeExecution();
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsResizing(true);
@@ -85,6 +87,10 @@ export default function Executor() {
 
   const handleRunStrategy = async () => {
     executeCode(code, instrument?.symbol || "20microns");
+    // Scroll to results after a small delay to ensure component is rendered
+    setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   return (
@@ -177,6 +183,15 @@ export default function Executor() {
         onClose={() => setShowTemplates(false)}
       />
 
+      {/* Results Section */}
+      <div ref={resultRef} className="w-full">
+        {(isLoading || result) && (
+          <Result 
+            data={result ? JSON.parse(result.stdout).results.loss_cutting : null} 
+            isLoading={isLoading}
+          />
+        )}
+      </div>
     </div>
   );
 }

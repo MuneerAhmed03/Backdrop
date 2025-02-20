@@ -9,6 +9,7 @@ from redis.exceptions import ConnectionError
 import redis
 from celery.app.control import Control
 from config.celery import app as celery_app
+from time import time
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +79,9 @@ class TaskResultView(APIView):
     
     def get(self, request, task_id):
         try:
+            start = time()
             result = AsyncResult(task_id, app=celery_app)
-            
+            print(f"Result fetching Time: {(time() - start)*1000} ms")
             if result.successful():
                 return Response({
                     'status': 'completed',
@@ -108,7 +110,6 @@ class CodeExecutionView(APIView):
     def post(self, request):
         redis_status, redis_message = ServiceStatus.check_redis()
         celery_status = ServiceStatus.celery_status()
-        
         if not redis_status or not celery_status:
             error_details = {
                 'error': 'service unavailable',
