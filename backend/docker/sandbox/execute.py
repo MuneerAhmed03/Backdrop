@@ -115,14 +115,14 @@ if __name__ == "__main__":
                 df.copy(),
                 trading_method=0
             )
-            risk_reduction_strategy = UserStrategy(
-                df.copy(),
-                trading_method=1
-            )
+            # risk_reduction_strategy = UserStrategy(
+            #     df.copy(),
+            #     trading_method=1
+            # )
             logger.info(f"Has run_backtest? {'run_backtest' in dir(loss_cutting_strategy)}")
             
             
-            logger.info(f"Has run_backtest? {'run_backtest' in dir(risk_reduction_strategy)}")
+            # logger.info(f"Has run_backtest? {'run_backtest' in dir(risk_reduction_strategy)}")
 
         except Exception as e:
             logger.error(f"Failed to initialize strategy: {str(e)}")
@@ -135,7 +135,7 @@ if __name__ == "__main__":
             logger.info("Loss cutting backtest completed")
             
             logger.info("About to run backtest for risk reduction strategy")
-            risk_reduction_results = risk_reduction_strategy.run_backtest()
+            # risk_reduction_results = risk_reduction_strategy.run_backtest()
             logger.info("Risk reduction backtest completed")
             
             logger.info("Backtest completed successfully")
@@ -144,11 +144,10 @@ if __name__ == "__main__":
             output = {
                 "results": {
                     "loss_cutting": loss_cutting_results.__dict__,
-                    "risk_reduction": risk_reduction_results.__dict__
                 },
                 "warnings": stderr_messages if stderr_messages else None
             }
-
+            # "risk_reduction": risk_reduction_results.__dict__
             result_json = json.dumps(output, cls=StrategyResultEncoder, indent=4)
             sys.stdout.write(result_json)
             sys.stdout.flush()
@@ -167,7 +166,7 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Execution error: {str(e)}")
         error_output = {
-            "error": str(e),
+             "error": str(e),
             "warnings": stderr_messages if stderr_messages else None
         }
         sys.stdout.write(json.dumps(error_output))

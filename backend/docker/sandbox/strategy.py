@@ -21,8 +21,8 @@ class Trade:
 class StrategyResult:
     initialCapital: float
     finalCapital: float
-    equityCurve: pd.Series
-    drawdownCurve: pd.Series
+    equityCurve: List[dict]
+    drawdownCurve: List[dict]
     trades: List[Trade]
     totalReturn: float
     totalReturnPct: float
@@ -52,6 +52,7 @@ class BaseStrategy(ABC):
         self.positions = pd.Series(0, index=data.index)
         self.investment_per_trade = investment_per_trade
         self.trading_method = trading_method
+        self.max_positions = -1;
 
 
     @abstractmethod
@@ -97,7 +98,9 @@ class BaseStrategy(ABC):
     def calculate_profit_factor(self) -> float:
         gross_profits = sum(trade.pnl for trade in self.trades if trade.pnl > 0)
         gross_losses = abs(sum(trade.pnl for trade in self.trades if trade.pnl < 0))
-        return gross_profits / gross_losses if gross_losses != 0 else float('inf')
+        if gross_losses == 0:
+            return 999999.0 if gross_profits > 0 else 0.0  # Return large number if profitable, 0 if no trades
+        return gross_profits / gross_losses
 
     def calculate_avg_trade_pnl(self) -> float:
         if not self.trades:
@@ -119,7 +122,7 @@ class BaseStrategy(ABC):
     def calculate_calmar_ratio(self) -> float:
         max_dd = self.calculate_max_drawdown_pct()
         if max_dd == 0:
-            return float('inf')
+            return 999999.0 if self.calculate_total_return_pct() > 0 else 0.0
         return self.calculate_total_return_pct() / abs(max_dd)
 
     def calculate_sortino_ratio(self, risk_free_rate: float = 0.02) -> float:
@@ -127,7 +130,7 @@ class BaseStrategy(ABC):
         excess_returns = returns - risk_free_rate / 252
         downside_returns = excess_returns[excess_returns < 0]
         if len(downside_returns) == 0:
-            return float('inf')
+            return 999999.0 if excess_returns.mean() > 0 else 0.0
         return np.sqrt(252) * excess_returns.mean() / downside_returns.std()
 
     def _close_trade(self, trade:Trade , exit_price,index_pos):
@@ -149,69 +152,81 @@ class BaseStrategy(ABC):
         heapq.heapify(self.openTrades)
 
         for i in range(1, len(self.data)):
-            if signals.iloc[i] != signals.iloc[i - 1]:
-                price = self.data['close'].iloc[i]
+            price = self.data['close'].iloc[i]
 
-                if signals.iloc[i] == 1:
-                    quantity = self.investment_per_trade // price
-    
-                    if quantity > 0 : 
-                        trade_cost = quantity * price
+            if signals.iloc[i] == 1:
+                quantity = self.investment_per_trade // price
 
-                        if trade_cost  <= self.availableCapital:
-                            new_trade = Trade(
-                                entry_date=self.data.index[i],
-                                exit_date=None,
-                                entry_price=price,
-                                exit_price=None,
-                                quantity=quantity,
-                                side='LONG', 
-                                pnl=0,
-                                exit_reason='signal'
-                            )
-                            trade_index = len(self.trades)
-                            self.trades.append(new_trade)
-                            key = new_trade.pnl if self.trading_method == 0 else -new_trade.pnl
-                            heapq.heappush(self.openTrades, (key,trade_index))
-                            self.availableCapital -= trade_cost
+                if quantity > 0 : 
+                    trade_cost = quantity * price
+
+                    if trade_cost  <= self.availableCapital:
+                        new_trade = Trade(
+                            entry_date=self.data.index[i],
+                            exit_date=None,
+                            entry_price=price,
+                            exit_price=None,
+                            quantity=quantity,
+                            side='LONG', 
+                            pnl=0,
+                            exit_reason='signal'
+                        )
+                        self.currentPosition+=1
+                        trade_index = len(self.trades)
+                        self.trades.append(new_trade)
+                        key = new_trade.pnl if self.trading_method == 0 else -new_trade.pnl
+                        heapq.heappush(self.openTrades, (key,trade_index))
+                        self.availableCapital -= trade_cost
 
                 elif signals.iloc[i] == -1:
                     if self.openTrades:
-                        if self.trading_method == 0:
-                            _, trade_index = heapq.heappop(self.openTrades)  
-                        else:
-                            _, trade_index = heapq.heappop(self.openTrades)
+                        _, trade_index = heapq.heappop(self.openTrades)
                         trade = self.trades[trade_index]
-                        self._close_trade(trade,price,i)
+                        self._close_trade(trade, price, i)
+                        self.currentPosition-=1
 
     
             self.equityCurve.iloc[i] = self.equityCurve.iloc[i - 1]
 
             updated_open_trades = []
+            
             for _, trade_index in list(self.openTrades):
-                open_trade=self.trades[trade_index]
+                open_trade = self.trades[trade_index]
                 price_change = self.data['close'].iloc[i]-self.data['close'].iloc[i - 1]
                 daily_pnl = price_change * open_trade.quantity
                 self.equityCurve.iloc[i] += daily_pnl
                 open_trade.pnl+=daily_pnl
 
                 updated_key = open_trade.pnl if self.trading_method == 0 else -open_trade.pnl
-                updated_open_trades.append((updated_key,trade_index))
-
+                updated_open_trades.append((updated_key, trade_index))
+            
+            self.max_positions = max(self.max_positions,self.currentPosition)
             self.openTrades = updated_open_trades
             heapq.heapify(self.openTrades)
  
         if self.openTrades:
             last_price = self.data['close'].iloc[-1]
-            while self.openTrades: # Loop until heap is empty
-                priority_key, trade_to_close = heapq.heappop(self.openTrades)
+            while self.openTrades: 
+                priority_key, trade_index = heapq.heappop(self.openTrades)
+                trade_to_close = self.trades[trade_index]
                 self._close_trade(trade_to_close, last_price, len(self.data) - 1)
+
+
+        equity_curve_data = [
+            {"date": str(date), "value": value}
+            for date, value in self.equityCurve.items()
+        ]
+        
+        drawdown_curve_data = [
+            {"date": str(date), "value": value}
+            for date, value in self.calculate_drawdown_curve().items()
+        ] 
 
         return StrategyResult(
             initialCapital=self.initialCapital,
             finalCapital=self.calculate_final_capital(),
-            equityCurve=self.calculate_equity_curve(),
-            drawdownCurve=self.calculate_drawdown_curve(),
+            equityCurve=equity_curve_data,
+            drawdownCurve=drawdown_curve_data,
             trades=self.trades,
             totalReturn=self.calculate_total_return(),
             totalReturnPct=self.calculate_total_return_pct(),

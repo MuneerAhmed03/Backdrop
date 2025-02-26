@@ -29,7 +29,7 @@ async def async_fetch_data(name):
         return deserialize_df(cached_data)
     
     logger.info("cache_miss")
-    data_url = os.getenv("DATA_URL") + name + ".csv"
+    data_url = os.getenv("DATA_URL") + name
     
 
     try:
