@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export function Header({ onRunStrategy, onShowTemplates }: HeaderProps) {
   return (
-    <nav className="border-b border-border bg-card/80 backdrop-blur-xl h-16 fixed top-0 w-full z-50">
+    <nav className="border-b border-border bg-card/80 backdrop-blur-xl h-16  top-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/" className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">

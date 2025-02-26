@@ -6,11 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { StockDataResponse } from "@/lib/types";
 
-// Mock API call
 const fetchSearchResults = async (
   query: string,
 ): Promise<StockDataResponse[]> => {
-  const response = await fetch(`http://127.0.0.1:8000/data/search/?q=${query}`);
+  const response = await fetch(`http://127.0.0.1:8001/data/search/?q=${query}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch search results");

@@ -20,11 +20,17 @@ export type Trade = {
   exitReason: string;
 };
 
+type CurvePoint = {
+  date: string;
+  value: number;
+};
+
+
 export type StrategyResult = {
   initialCapital: number;
   finalCapital: number;
-  equityCurve: number[];
-  drawdownCurve: number[];
+  equityCurve: CurvePoint[];
+  drawdownCurve: CurvePoint[];
   trades: Trade[];
   totalReturn: number;
   totalReturnPct: number;

@@ -43,6 +43,7 @@ export default function Executor() {
   const [isResizing, setIsResizing] = useState(false);
   const [instrument, setInstrument] = useState<StockDataResponse | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const [strategy,setStrategy]=useState<string>("Risk Reduction");
   const {executeCode, isLoading, result, error} = useCodeExecution();
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -86,7 +87,7 @@ export default function Executor() {
   }, [isResizing, handleMouseMove]);
 
   const handleRunStrategy = async () => {
-    executeCode(code, instrument?.symbol || "20microns");
+    executeCode(code, instrument?.source_file || "20microns.csv");
     // Scroll to results after a small delay to ensure component is rendered
     setTimeout(() => {
       resultRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -99,8 +100,7 @@ export default function Executor() {
         onRunStrategy={handleRunStrategy}
         onShowTemplates={() => setShowTemplates(true)}
       />
-
-      <div className="flex-1 flex mt-16">
+      <div className="flex-1 flex">
         <div className="flex-1 p-4 min-w-0">
           <div className="w-full h-full  bg-card/80 backdrop-blur-xl overflow-hidden shadow-lg">
             <CodeEditor value={code} onChange={setCode} />
@@ -189,6 +189,7 @@ export default function Executor() {
           <Result 
             data={result ? JSON.parse(result.stdout).results.loss_cutting : null} 
             isLoading={isLoading}
+            onStrategySelect={setStrategy}
           />
         )}
       </div>

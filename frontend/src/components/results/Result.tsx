@@ -2,6 +2,13 @@ import { useRef, useState, useEffect } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { StrategyResult } from "@/lib/types"
 import { formatNumber } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formatters = {
   currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
@@ -27,39 +34,82 @@ const RatioCard = ({ label, value, description }: { label: string; value: number
 );
 
 const SkeletonCard = () => (
-  <div className="metric-card animate-pulse">
+  <div className="metric-card animate-pulse motion-safe:[animation-duration:3s]">
     <div className="h-4 w-24 bg-gray-700/50 rounded mb-2"></div>
     <div className="h-6 w-32 bg-gray-700/50 rounded"></div>
   </div>
 );
 
 const SkeletonChart = () => (
-  <div className="h-64 glassmorphism p-4 rounded-lg animate-pulse">
+  <div className="h-64 glassmorphism p-4 rounded-lg animate-pulse motion-safe:[animation-duration:3s]">
     <div className="w-full h-full bg-gray-700/50 rounded"></div>
   </div>
 );
 
+interface ChartDataPoint {
+  date: string;
+  equity: number;
+  drawdown: number;
+}
+
 interface ResultProps {
   data: StrategyResult | null;
   isLoading: boolean;
+  onStrategySelect?: (strategy: string) => void;
 }
 
-const Index = ({ data, isLoading }: ResultProps) => {
+const Index = ({ data, isLoading, onStrategySelect = () => {} }: ResultProps) => {
   const [syncedTooltipIndex, setSyncedTooltipIndex] = useState<number | null>(null);
   const equityChartRef = useRef<any>(null);
   const drawdownChartRef = useRef<any>(null);
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
   useEffect(() => {
     if (data) {
-      setChartData(data.equityCurve.map((equity, index) => ({
-        date: new Date(2023, 0, index).toLocaleDateString(),
-        equity,
-        drawdown: data.drawdownCurve[index]
-      })));
+      setChartData(
+        data.equityCurve.map((point, index) => ({
+          date: new Date(point.date).toLocaleDateString(),
+          equity: point.value,
+          drawdown: (data.drawdownCurve[index]?.value ?? 0) * 100
+        }))
+      );
     }
   }, [data]);
 
+  const formatIndianNumber = (value:number) => {
+    if (value >= 1_00_00_000) {
+      return (value / 1_00_00_000).toFixed(1).replace(/\.0$/, '') + 'Cr'; 
+    } else if (value >= 1_00_000) {
+      return (value / 1_00_000).toFixed(1).replace(/\.0$/, '') + 'L';
+    } else if (value >= 1_000) {
+      return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'K'; 
+    }
+    return value.toString(); 
+  };
+  
+  const { min, max } = chartData.reduce(
+    (acc, d) => ({
+      min: Math.min(acc.min, d.equity),
+      max: Math.max(acc.max, d.equity),
+    }),
+    { min: Infinity, max: -Infinity }
+  );
+  
+  const upperMax = Math.ceil(max / 100) * 100; 
+  const lowerMin = Math.floor(min/100) * 100;
+  const range = upperMax - min;
+  const step = Math.ceil(range / 5 / 100) * 100; 
+  
+  const ticks = [];
+  for (let i = lowerMin; i <= upperMax; i += step) {
+    ticks.push(i);
+  }
+
+  if (!ticks.includes(upperMax)) {
+    ticks.push(upperMax); 
+  }
+  
+  
   const handleMouseMove = (ref: any) => (props: any) => {
     if (props.activeTooltipIndex !== syncedTooltipIndex) {
       setSyncedTooltipIndex(props.activeTooltipIndex);
@@ -107,6 +157,18 @@ const Index = ({ data, isLoading }: ResultProps) => {
   return (
     <div className="min-h-screen bg-background text-foreground p-6 animate-fadeIn">
       <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Backtest Result</h1>
+          <Select defaultValue="Loss Cutting" onValueChange={onStrategySelect}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select strategy" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Loss Cutting">Loss Cutting</SelectItem>
+              <SelectItem value="Risk Reduction">Risk Reduction</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slideUp">
           <div className="metric-card">
             <div className="text-sm text-gray-400">Initial Capital</div>
@@ -145,10 +207,15 @@ const Index = ({ data, isLoading }: ResultProps) => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-                <XAxis dataKey="date" stroke="#6B7280" />
-                <YAxis 
+                <XAxis dataKey="date" stroke="#6B7280" tick={{ fontSize: 12 }} />
+                <YAxis
+                  dataKey="equity"
                   stroke="#6B7280"
-                  tickFormatter={(value) => formatNumber(value, { style: 'currency', currency: 'USD' })}
+                  tickFormatter={(value) => formatIndianNumber(value)}
+                  domain={['dataMin', 'dataMax']}
+                  padding={{ top: 20 }}
+                  tick={{ fontSize: 12 }}
+                  ticks={ticks}
                 />
                 <Tooltip
                   contentStyle={{
@@ -183,10 +250,27 @@ const Index = ({ data, isLoading }: ResultProps) => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-                <XAxis dataKey="date" stroke="#6B7280" />
-                <YAxis 
+                <XAxis dataKey="date" stroke="#6B7280" tick={{ fontSize: 12 }} />
+                <YAxis
+                  dataKey="drawdown" 
                   stroke="#6B7280"
-                  tickFormatter={(value) => `${value}%`}
+                  tickFormatter={(value) => `${value.toFixed(2)}%`}
+                  domain={[
+                    (dataMin: number) => Math.floor(dataMin / 5) * 5,
+                    (dataMax: number) => Math.ceil(dataMax / 5) * 5
+                  ]}
+                  padding={{ top: 20 }}
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                  ticks={(() => {
+                    const min = Math.floor(Math.min(...chartData.map(d => d.drawdown)) / 5) * 5;
+                    const max = Math.ceil(Math.max(...chartData.map(d => d.drawdown)) / 5) * 5;
+                    const ticks = [];
+                    for (let i = min; i <= max; i += 5) {
+                      ticks.push(i);
+                    }
+                    return ticks;
+                  })()}
                 />
                 <Tooltip
                   contentStyle={{
