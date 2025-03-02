@@ -63,9 +63,9 @@ export default function Executor() {
   const [initialCapital, setInitialCapital] = useState<number>(100000);
   const [investmentPerTrade, setInvestmentPerTrade] = useState<number>(10000);
 
-  // Calculate parameter pane width based on editor width
+  
   const parameterPaneWidth = useMemo(() => {
-    // Ensure minimum width of 33% of window width for parameter pane
+    
     const minParamWidth = Math.floor(window.innerWidth * 0.33);
     const calculatedWidth = window.innerWidth - editorWidth - 1;
     return Math.max(calculatedWidth, minParamWidth);
@@ -84,8 +84,8 @@ export default function Executor() {
     (e: MouseEvent) => {
       if (!isResizing) return;
 
-      const minWidth = Math.floor(window.innerWidth * 0.5); // 50% of screen width
-      const maxWidth = Math.floor(window.innerWidth * 0.67); // ~67% of screen width
+      const minWidth = Math.floor(window.innerWidth * 0.5); 
+      const maxWidth = Math.floor(window.innerWidth * 0.67);
       const newWidth = e.clientX;
 
       if (newWidth >= minWidth && newWidth <= maxWidth) {
@@ -148,12 +148,12 @@ export default function Executor() {
         </div>
 
         <div 
-          className="w-1 hover:bg-accent/50 cursor-col-resize relative group"
+          className="w-1 hover:bg-accent/50 cursor-col-resize relative group px-1"
           onMouseDown={handleMouseDown}
         >
-          <div className="absolute inset-y-0 -left-2 -right-2" />
-          {/* Drag handle indicator */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-8 flex flex-col justify-center items-center gap-1 pointer-events-none px-2">
+          <div className="absolute inset-y-0 -left-2 -right-2 " />
+
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-8 flex flex-col justify-center items-center gap-1 pointer-events-none ">
             <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
             <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
             <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />

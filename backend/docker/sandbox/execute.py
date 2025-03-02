@@ -41,39 +41,48 @@ def validate_user_code(code):
     SafeCodeVisitor().visit(tree)
 
 def load_data():
+    code_path = '/host_tmpfs/code.py'  
+    data_path = '/host_tmpfs/data.pkl'  
+    config_path = '/host_tmpfs/config.txt'
+
     try:
-        
-        code_path = '/host_tmpfs/code.py'  
-        data_path = '/host_tmpfs/data.pkl'  
-        config_path = '/host_tmpfs/config.txt'
+        for path, file_type in [(code_path, "Code"), (data_path, "Data"), (config_path, "Config")]:
+            if not os.path.exists(path):
+                error_msg = f"{file_type} file not found: {path}"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
+        try:
+            with open(code_path, 'r') as code_file:
+                code = code_file.read()
+                logger.info(f"Successfully read code from {code_path}")
+        except Exception as e:
+            error_msg = f"Failed to read code file: {str(e)}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
 
-        if not os.path.exists(config_path):
-            logger.error(f"Config file not found: {code_path}")
-            sys.exit(2)
+        try:
+            with open(data_path, 'rb') as data_file:
+                df = pickle.load(data_file)
+                logger.info(f"Successfully read data from {data_path}")
+        except Exception as e:
+            error_msg = f"Failed to read or deserialize data file: {str(e)}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
 
-        if not os.path.exists(code_path):
-            logger.error(f"Code file not found: {code_path}")
-            sys.exit(2)
-        if not os.path.exists(data_path):
-            logger.error(f"Data file not found: {data_path}")
-            sys.exit(2)
-
-        with open(code_path, 'r') as code_file:
-            code = code_file.read()
-            logger.info(f"Successfully read code from {code_path}")
-
-        with open(data_path, 'rb') as data_file:
-            df = pickle.load(data_file) 
-            logger.info(f"Successfully read data from {data_path}")
-
-        with open(config_path, 'r') as config_file:
-            config={}
-            for line in config_file:
-                key,value= line.strip().split('=')
-                config[key]=float(value)
+        try:
+            config = {}
+            with open(config_path, 'r') as config_file:
+                for line in config_file:
+                    key, value = line.strip().split('=')
+                    config[key] = float(value)
+            logger.info(f"Successfully read config from {config_path}")
+        except Exception as e:
+            error_msg = f"Failed to read or parse config file: {str(e)}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
 
         return code, df, config
-    
+
     except Exception as e:
         logger.error(f"Data loading error: {str(e)}")
         sys.exit(2)

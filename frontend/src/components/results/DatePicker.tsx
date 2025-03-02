@@ -32,16 +32,14 @@ export default function DateRangePicker({
   const [isOpen, setIsOpen] = React.useState(false);
   const [calendarKey, setCalendarKey] = React.useState(0);
 
-  // Function to handle month change
   const handleMonthChange = (value: string) => {
     setCurrentMonth(months.indexOf(value));
-    setCalendarKey(prev => prev + 1); // Force calendar re-render
+    setCalendarKey(prev => prev + 1); 
   };
 
-  // Function to handle year change
   const handleYearChange = (value: string) => {
     setCurrentYear(parseInt(value));
-    setCalendarKey(prev => prev + 1); // Force calendar re-render
+    setCalendarKey(prev => prev + 1); 
   };
 
   return (

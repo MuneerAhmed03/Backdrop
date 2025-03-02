@@ -45,6 +45,18 @@ async def async_fetch_data(name):
     cache.set(cache_key, serialize_df(df), timeout=3600 * 24 * 7)
     return df
 
+def filter_df(df,range):
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    date_from = pd.to_datetime(range['from'])
+    date_to = pd.to_datetime(range['to'])
+
+    filtered_df = df[(df['Date'] >= date_from) & (df['Date'] <= date_to)]
+
+    filtered_df['Date'] =  filtered_df['Date'].dt.strftime('%Y-%m-%d')
+
+    return filtered_df
+
 async def prepare_files(temp_dir, code, data_frame, config):
     loop = asyncio.get_event_loop()
     code_path = os.path.join(temp_dir, "code.py")
@@ -88,6 +100,7 @@ def execute_code_task(self, backtest):
     name = backtest.get('name')
     code = backtest.get('code')
     config = backtest.get('params')
+    range = backtest.get('range')
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -99,7 +112,8 @@ def execute_code_task(self, backtest):
             nonlocal container
             container, temp_dir = await pool.acquire_container_async()
             data_frame = await async_fetch_data(name)
-            code_path, data_path, config_path = await prepare_files(temp_dir, code, data_frame, config)
+            df = filter_df(data_frame,range)
+            code_path, data_path, config_path = await prepare_files(temp_dir, code, df, config)
 
             exec_result = await asyncio.to_thread(
                 container.exec_run,

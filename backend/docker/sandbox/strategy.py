@@ -30,14 +30,14 @@ class StrategyResult:
     maxDrawdown: float
     maxDrawdownPct: float
     winRate: float
-    profitFactor: float
+    profitFactor: float | str
     numTrades: int
     avgTradePnl: float
-    avgWinnerPnl: float
-    avgLoserPnl: float
+    avgWinnerPnl: float | str
+    avgLoserPnl: float | str 
     annualizedVolatility: float
-    calmarRatio: float
-    sortinoRatio: float
+    calmarRatio: float | str 
+    sortinoRatio: float | str
 
 class BaseStrategy(ABC):
     def __init__(self, data: pd.DataFrame, initial_capital: float = 100000,investment_per_trade:float = 10000,trading_method:int = 0):
@@ -99,7 +99,7 @@ class BaseStrategy(ABC):
         gross_profits = sum(trade.pnl for trade in self.trades if trade.pnl > 0)
         gross_losses = abs(sum(trade.pnl for trade in self.trades if trade.pnl < 0))
         if gross_losses == 0:
-            return 999999.0 if gross_profits > 0 else 0.0  # Return large number if profitable, 0 if no trades
+            return "∞" if gross_profits > 0 else 0.0
         return gross_profits / gross_losses
 
     def calculate_avg_trade_pnl(self) -> float:
@@ -109,11 +109,11 @@ class BaseStrategy(ABC):
 
     def calculate_avg_winner_pnl(self) -> float:
         winning_trades = [trade.pnl for trade in self.trades if trade.pnl > 0]
-        return sum(winning_trades) / len(winning_trades) if winning_trades else 0.0
+        return sum(winning_trades) / len(winning_trades) if winning_trades else "N/A"
 
     def calculate_avg_loser_pnl(self) -> float:
         losing_trades = [trade.pnl for trade in self.trades if trade.pnl < 0]
-        return sum(losing_trades) / len(losing_trades) if losing_trades else 0.0
+        return sum(losing_trades) / len(losing_trades) if losing_trades else "N/A"
 
     def calculate_annualized_volatility(self) -> float:
         returns = self.equityCurve.pct_change().dropna()
@@ -122,7 +122,7 @@ class BaseStrategy(ABC):
     def calculate_calmar_ratio(self) -> float:
         max_dd = self.calculate_max_drawdown_pct()
         if max_dd == 0:
-            return 999999.0 if self.calculate_total_return_pct() > 0 else 0.0
+            return "∞" if self.calculate_total_return_pct() > 0 else 0.0
         return self.calculate_total_return_pct() / abs(max_dd)
 
     def calculate_sortino_ratio(self, risk_free_rate: float = 0.02) -> float:
@@ -130,7 +130,7 @@ class BaseStrategy(ABC):
         excess_returns = returns - risk_free_rate / 252
         downside_returns = excess_returns[excess_returns < 0]
         if len(downside_returns) == 0:
-            return 999999.0 if excess_returns.mean() > 0 else 0.0
+            return "∞" if excess_returns.mean() > 0 else 0.0
         return np.sqrt(252) * excess_returns.mean() / downside_returns.std()
 
     def _close_trade(self, trade:Trade , exit_price,index_pos):
@@ -225,9 +225,6 @@ class BaseStrategy(ABC):
         return StrategyResult(
             initialCapital=self.initialCapital,
             finalCapital=self.calculate_final_capital(),
-            equityCurve=equity_curve_data,
-            drawdownCurve=drawdown_curve_data,
-            trades=self.trades,
             totalReturn=self.calculate_total_return(),
             totalReturnPct=self.calculate_total_return_pct(),
             sharpeRatio=self.calculate_sharpe_ratio(),
@@ -241,5 +238,8 @@ class BaseStrategy(ABC):
             avgLoserPnl=self.calculate_avg_loser_pnl(),
             annualizedVolatility=self.calculate_annualized_volatility(),
             calmarRatio=self.calculate_calmar_ratio(),
-            sortinoRatio=self.calculate_sortino_ratio()
+            sortinoRatio=self.calculate_sortino_ratio(),
+            equityCurve=equity_curve_data,
+            drawdownCurve=drawdown_curve_data,
+            trades=self.trades,
         )

@@ -109,15 +109,13 @@
       );
     }, 500);
 
-    // Handle editor changes
     const handleEditorChange: OnChange = (value = '') => {
       onChange(value);
       debouncedValidation(value);
     };
 
-    // Handle editor beforeMount to define custom theme
     const handleEditorWillMount = (monacoInstance: Monaco) => {
-      monacoRef.current = monacoInstance; // Store the Monaco instance
+      monacoRef.current = monacoInstance; // Store 
       monacoInstance.editor.defineTheme('backdrop-dark', {
         base: 'vs-dark',
         inherit: true,

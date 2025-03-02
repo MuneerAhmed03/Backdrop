@@ -56,9 +56,9 @@ export default function SearchBar({
 
   const handleSelectItem = useCallback((item: StockDataResponse) => {
     onSelectItem(item);
-    setQuery(`${item.symbol} - ${item.stock_name}`); // Set the search input value to the selected item
+    setQuery(`${item.symbol} - ${item.stock_name}`); 
     console.log(query);
-    setResults([]); // Clear the results after selection
+    setResults([]); 
   }, []);
 
   return (

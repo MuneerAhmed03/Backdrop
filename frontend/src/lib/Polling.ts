@@ -4,30 +4,16 @@ function printKeys(obj: Record<string, any>, prefix: string = "") {
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
       const newKey = prefix ? `${prefix}.${key}` : key;
-      console.log(newKey); // Print the key
+      console.log(newKey); 
 
       if (typeof obj[key] === "object" && obj[key] !== null) {
-        printKeys(obj[key], newKey); // Recursively call for nested objects
+        printKeys(obj[key], newKey); 
       }
     }
   }
 }
 
-// Example Object
-const nestedObject = {
-  name: "Alice",
-  details: {
-    age: 25,
-    address: {
-      city: "New York",
-      zip: 10001
-    },
-  },
-  hobbies: ["reading", "gaming"],
-};
 
-// Call function
-printKeys(nestedObject);
 
 
 const useCodeExecution = () => {
@@ -97,6 +83,13 @@ const useCodeExecution = () => {
         const data = await response.json();
 
         if (data.status === "completed") {
+          if(
+            JSON.parse(data.result.stdout).results.loss_cutting === JSON.parse(data.result.stdout).results.risk_reduction 
+          ){
+            console.log("true");
+          }else{
+            console.log("false");
+          }
           setResult(data.result);
           setIsLoading(false);
           return;

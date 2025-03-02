@@ -1,8 +1,8 @@
 export interface StockDataResponse {
   symbol: string;
   source_file: string;
-  start_date: string | null; // ISO date string format YYYY-MM-DD
-  latest_date: string | null; // ISO date string format YYYY-MM-DD
+  start_date: string | null; 
+  latest_date: string | null; 
   stock_name: string | null;
   isEtf: boolean;
 }
@@ -38,12 +38,12 @@ export type StrategyResult = {
   maxDrawdown: number;
   maxDrawdownPct: number;
   winRate: number;
-  profitFactor: number;
+  profitFactor: number | string;
   numTrades: number;
   avgTradePnl: number;
-  avgWinnerPnl: number;
-  avgLoserPnl: number;
+  avgWinnerPnl: number | string;
+  avgLoserPnl: number | string ;
   annualizedVolatility: number;
-  calmarRatio: number;
-  sortinoRatio: number;
+  calmarRatio: number | string;
+  sortinoRatio: number | string ;
 };

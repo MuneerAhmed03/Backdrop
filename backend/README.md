@@ -14,5 +14,9 @@ uvicorn config.asgi:application --reload --host 0.0.0.0 --port 8000
 
 gunicorn config.wsgi:application --bind 127.0.0.1:8001 --keep-alive 60
 
-data['date'] = pd.to_datetime(data['date'])  # Convert to datetime if necessary
-data.set_index('date', inplace=True)  # Set the 'date' column as the index
+//TODO
+- number formating
+- soft login wall
+- rate limitting
+- template strategies and user strategies
+- error management 
