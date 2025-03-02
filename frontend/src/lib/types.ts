@@ -32,18 +32,18 @@ export type StrategyResult = {
   equityCurve: CurvePoint[];
   drawdownCurve: CurvePoint[];
   trades: Trade[];
-  totalReturn: number;
-  totalReturnPct: number;
-  sharpeRatio: number;
-  maxDrawdown: number;
-  maxDrawdownPct: number;
-  winRate: number;
-  profitFactor: number | string;
-  numTrades: number;
-  avgTradePnl: number;
+  totalReturn: number; // 
+  totalReturnPct: number; // 
+  sharpeRatio: number; //
+  maxDrawdown: number; 
+  maxDrawdownPct: number; // 
+  winRate: number; // 
+  profitFactor: number | string; //
+  numTrades: number; // 
+  avgTradePnl: number; // 
   avgWinnerPnl: number | string;
   avgLoserPnl: number | string ;
   annualizedVolatility: number;
-  calmarRatio: number | string;
-  sortinoRatio: number | string ;
+  calmarRatio: number | string; //
+  sortinoRatio: number | string ; //
 };

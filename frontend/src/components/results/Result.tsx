@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { StrategyResult } from "@/lib/types"
-import { formatNumber } from "@/lib/utils";
+
 import {
   Select,
   SelectContent,
@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/select";
 
 const formatters = {
-  currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
-  percent: new Intl.NumberFormat('en-US', { style: 'percent', minimumFractionDigits: 2 }),
-  decimal: new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
+  currency: new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }),
+  percent: new Intl.NumberFormat('en-IN', { style: 'percent', minimumFractionDigits: 2 }),
+  decimal: new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 })
 };
 
 const ratioDescriptions = {
@@ -23,10 +23,10 @@ const ratioDescriptions = {
   profitFactor: "Ratio of gross profits to gross losses"
 };
 
-const RatioCard = ({ label, value, description }: { label: string; value: number; description: string }) => (
+const RatioCard = ({ label, value, description }: { label: string; value: number | string ; description: string }) => (
   <div className="group relative metric-card">
     <div className="text-sm text-gray-400">{label}</div>
-    <div className="text-xl font-semibold">{formatters.decimal.format(value)}</div>
+    <div className="text-xl font-semibold">{typeof value ==="number" ? formatters.decimal.format(value) : value}</div>
     <div className="ratio-tooltip">
       {description}
     </div>
@@ -159,7 +159,7 @@ const Index = ({ data, isLoading, onStrategySelect = () => {} }: ResultProps) =>
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Backtest Result</h1>
-          <Select defaultValue="Loss Cutting" onValueChange={onStrategySelect}>
+          {/* <Select defaultValue="Loss Cutting" onValueChange={onStrategySelect}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select strategy" />
             </SelectTrigger>
@@ -167,25 +167,25 @@ const Index = ({ data, isLoading, onStrategySelect = () => {} }: ResultProps) =>
               <SelectItem value="Loss Cutting">Loss Cutting</SelectItem>
               <SelectItem value="Risk Reduction">Risk Reduction</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slideUp">
           <div className="metric-card">
             <div className="text-sm text-gray-400">Initial Capital</div>
             <div className="text-xl font-semibold">
-              {formatNumber(data.initialCapital, { style: 'currency', currency: 'USD' })}
+              {formatters.currency.format(data.initialCapital)}
             </div>
           </div>
           <div className="metric-card">
             <div className="text-sm text-gray-400">Final Capital</div>
             <div className={`text-2xl font-bold text-profit`}>
-              {formatNumber(data.finalCapital, { style: 'currency', currency: 'USD' })}
+              {formatters.currency.format(data.finalCapital)}
             </div>
           </div>
           <div className="metric-card">
             <div className="text-sm text-gray-400">Total Return</div>
             <div className={`text-xl font-semibold ${data.totalReturn >= 0 ? 'text-profit' : 'text-loss'}`}>
-              {formatNumber(data.totalReturn, { style: 'currency', currency: 'USD' })}
+              {formatters.currency.format(data.totalReturn)}
               <span className="text-sm ml-2">
                 ({formatters.percent.format(data.totalReturnPct / 100)})
               </span>
@@ -213,7 +213,7 @@ const Index = ({ data, isLoading, onStrategySelect = () => {} }: ResultProps) =>
                   stroke="#6B7280"
                   tickFormatter={(value) => formatIndianNumber(value)}
                   domain={['dataMin', 'dataMax']}
-                  padding={{ top: 20 }}
+                  padding={{ top: 10 , bottom : 10 }}
                   tick={{ fontSize: 12 }}
                   ticks={ticks}
                 />
@@ -223,7 +223,7 @@ const Index = ({ data, isLoading, onStrategySelect = () => {} }: ResultProps) =>
                     border: "1px solid rgba(255, 255, 255, 0.2)",
                   }}
                   formatter={(value: any) => [
-                    formatNumber(value, { style: 'currency', currency: 'USD' }),
+                    formatters.currency.format(value),
                     "Equity"
                   ]}
                 />
@@ -327,13 +327,31 @@ const Index = ({ data, isLoading, onStrategySelect = () => {} }: ResultProps) =>
           </div>
           <div className="metric-card">
             <div className="text-sm text-gray-400">Total Trades</div>
-            <div className="text-xl font-semibold">{formatNumber(data.numTrades)}</div>
+            <div className="text-xl font-semibold">{data.numTrades}</div>
           </div>
           <div className="metric-card">
             <div className="text-sm text-gray-400">Avg Trade P&L</div>
             <div className={`text-xl font-semibold ${data.avgTradePnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-              {formatNumber(data.avgTradePnl, { style: 'currency', currency: 'USD' })}
+              {formatters.currency.format(data.avgTradePnl)}
             </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Avg Winner P&L</div>
+            <div className="text-xl font-semibold text-profit">
+              {typeof data.avgWinnerPnl === "number" ? formatters.currency.format(data.avgWinnerPnl) : data.avgWinnerPnl}
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Avg Loser P&L</div>
+            <div className="text-xl font-semibold text-loss">
+              {typeof data.avgLoserPnl === "number" ? formatters.currency.format(data.avgLoserPnl) : data.avgLoserPnl}
+            </div>
+          </div>
+          <div className="metric-card">
+            <div className="text-sm text-gray-400">Annualized Volatality</div>
+            <div className="text-xl font-semibold">{formatters.percent.format(data.annualizedVolatility / 100)}</div>
           </div>
         </div>
       </div>
