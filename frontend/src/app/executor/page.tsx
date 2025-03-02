@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { CodeEditor } from "@/components/executor/CodeEditor";
 import { Header } from "@/components/executor/Header";
 import { TemplatesModal } from "@/components/executor/Templates";
@@ -9,6 +9,9 @@ import SearchBar from "@/components/executor/SearchBar";
 import useCodeExecution  from "@/lib/Polling";
 import { StockDataResponse } from "@/lib/types";
 import Result from "@/components/results/Result"
+import DatePicker from "@/components/results/DatePicker"
+import DateRangePicker from "@/components/results/DatePicker";
+import { DateRange } from "react-day-picker";
 
 
 const DEFAULT_CODE = `
@@ -39,12 +42,34 @@ export default function Executor() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showParameters, setShowParameters] = useState(true);
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [panelWidth, setPanelWidth] = useState(320);
+  const [editorWidth, setEditorWidth] = useState(() => Math.floor(window.innerWidth * 0.67));
   const [isResizing, setIsResizing] = useState(false);
   const [instrument, setInstrument] = useState<StockDataResponse | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const [strategy,setStrategy]=useState<string>("Risk Reduction");
   const {executeCode, isLoading, result, error} = useCodeExecution();
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    
+    const firstDayOfYear = new Date(today.getFullYear(), 0, 1); 
+    
+    return {
+      from: firstDayOfYear,
+      to: oneWeekAgo,
+    };
+  });
+  const [initialCapital, setInitialCapital] = useState<number>(100000);
+  const [investmentPerTrade, setInvestmentPerTrade] = useState<number>(10000);
+
+  // Calculate parameter pane width based on editor width
+  const parameterPaneWidth = useMemo(() => {
+    // Ensure minimum width of 33% of window width for parameter pane
+    const minParamWidth = Math.floor(window.innerWidth * 0.33);
+    const calculatedWidth = window.innerWidth - editorWidth - 1;
+    return Math.max(calculatedWidth, minParamWidth);
+  }, [editorWidth]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsResizing(true);
@@ -59,9 +84,12 @@ export default function Executor() {
     (e: MouseEvent) => {
       if (!isResizing) return;
 
-      const newWidth = window.innerWidth - e.clientX;
-      if (newWidth > 280 && newWidth < 600) {
-        setPanelWidth(newWidth);
+      const minWidth = Math.floor(window.innerWidth * 0.5); // 50% of screen width
+      const maxWidth = Math.floor(window.innerWidth * 0.67); // ~67% of screen width
+      const newWidth = e.clientX;
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        setEditorWidth(newWidth);
       }
     },
     [isResizing],
@@ -87,8 +115,17 @@ export default function Executor() {
   }, [isResizing, handleMouseMove]);
 
   const handleRunStrategy = async () => {
-    executeCode(code, instrument?.source_file || "20microns.csv");
-    // Scroll to results after a small delay to ensure component is rendered
+    if (dateRange.from && dateRange.to) {
+      executeCode(
+        code, 
+        instrument?.source_file || "20microns.csv", 
+        dateRange.from.toISOString().split('T')[0],
+        dateRange.to.toISOString().split('T')[0],
+        initialCapital,
+        investmentPerTrade
+      );
+    }
+    
     setTimeout(() => {
       resultRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
@@ -101,17 +138,31 @@ export default function Executor() {
         onShowTemplates={() => setShowTemplates(true)}
       />
       <div className="flex-1 flex">
-        <div className="flex-1 p-4 min-w-0">
-          <div className="w-full h-full  bg-card/80 backdrop-blur-xl overflow-hidden shadow-lg">
+        <div 
+          style={{ width: editorWidth }} 
+          className="p-4 min-w-[50%] max-w-[67%]"
+        >
+          <div className="w-full h-full bg-card/80 backdrop-blur-xl overflow-hidden shadow-lg">
             <CodeEditor value={code} onChange={setCode} />
           </div>
         </div>
 
-        <div className="resizer" onMouseDown={handleMouseDown} />
+        <div 
+          className="w-1 hover:bg-accent/50 cursor-col-resize relative group"
+          onMouseDown={handleMouseDown}
+        >
+          <div className="absolute inset-y-0 -left-2 -right-2" />
+          {/* Drag handle indicator */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-8 flex flex-col justify-center items-center gap-1 pointer-events-none px-2">
+            <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
+            <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
+            <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
+          </div>
+        </div>
 
         <div
-          style={{ width: showParameters ? panelWidth : 0 }}
-          className={`border-l border-border bg-card/80 backdrop-blur-xl transition-all duration-300 ease-in-out ${
+          style={{ width: showParameters ? parameterPaneWidth : 0 }}
+          className={`flex-shrink-0 border-l border-border bg-card/80 backdrop-blur-xl transition-all duration-300 ease-in-out ${
             showParameters ? "translate-x-0" : "translate-x-full"
           } ${isResizing ? "transition-none" : ""}`}
         >
@@ -144,12 +195,7 @@ export default function Executor() {
                 <label className="block text-sm font-medium mb-2 text-foreground/80">
                   Time Period
                 </label>
-                <select className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors">
-                  <option>Last 1 Year</option>
-                  <option>Last 2 Years</option>
-                  <option>Last 5 Years</option>
-                  <option>Custom Range</option>
-                </select>
+                <DateRangePicker onDateRangeChange={setDateRange} dateRange={dateRange}/>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground/80">
@@ -159,18 +205,22 @@ export default function Executor() {
                   type="number"
                   className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
                   placeholder="Enter amount"
-                  defaultValue={100000}
+                  value={initialCapital}
+                  onChange={(e) => setInitialCapital(Number(e.target.value))}
+                  min={0}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground/80">
-                  Risk Per Trade (%)
+                  Investment Per Trade
                 </label>
                 <input
                   type="number"
                   className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
-                  placeholder="Enter percentage"
-                  defaultValue={1}
+                  placeholder="Enter amount"
+                  value={investmentPerTrade}
+                  onChange={(e) => setInvestmentPerTrade(Number(e.target.value))}
+                  min={0}
                 />
               </div>
             </div>

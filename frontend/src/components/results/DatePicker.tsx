@@ -19,9 +19,10 @@ const months = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: currentYear - 1995 + 1 }, (_, i) => 1995 + i);
 
-export function DateRangePicker({
+export default function DateRangePicker({
   dateRange,
   onDateRangeChange,
   className,
@@ -51,29 +52,31 @@ export function DateRangePicker({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal",
               !dateRange.from && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange.from ? (
-              dateRange.to ? (
-                <>
-                  {format(dateRange.from, "LLL dd, y")} -{" "}
-                  {format(dateRange.to, "LLL dd, y")}
-                </>
+            <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="truncate">
+              {dateRange.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                    {format(dateRange.to, "LLL dd, y")}
+                  </>
+                ) : (
+                  format(dateRange.from, "LLL dd, y")
+                )
               ) : (
-                format(dateRange.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date range</span>
-            )}
+                <span>Pick a date range</span>
+              )}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={4}>
           <div className="px-4 pt-4 flex gap-2">
             <Select onValueChange={handleMonthChange} defaultValue={months[currentMonth]}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="flex-1 min-w-[140px]">
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>

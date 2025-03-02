@@ -45,11 +45,11 @@ async def async_fetch_data(name):
     cache.set(cache_key, serialize_df(df), timeout=3600 * 24 * 7)
     return df
 
-async def prepare_files(temp_dir, code, data_frame):
-
+async def prepare_files(temp_dir, code, data_frame, config):
     loop = asyncio.get_event_loop()
     code_path = os.path.join(temp_dir, "code.py")
     data_path = os.path.join(temp_dir, "data.pkl")
+    config_path = os.path.join(temp_dir, "config.txt")
 
     async def write_code(path,content):
         async with aiofiles.open(path,'w') as f:
@@ -59,11 +59,18 @@ async def prepare_files(temp_dir, code, data_frame):
         async with aiofiles.open(path,'wb') as f:
             await f.write(pickle.dumps(data))
         
+    async def write_config(path, config):
+        async with aiofiles.open(path, 'w') as f:
+            for key,value in config.items():
+                logger.info(f"config values {key}={value}")
+                await f.write(f"{key}={value}\n")
+
     await asyncio.gather(
-        write_code(code_path,code),
-        write_data(data_path,data_frame)
-        )
-    return code_path, data_path
+        write_code(code_path, code),
+        write_data(data_path, data_frame),
+        write_config(config_path, config)
+    )
+    return code_path, data_path, config_path
 
 
 @shared_task(bind=True, acks_late=True, queue='execution_queue')
@@ -80,6 +87,7 @@ def execute_code_task(self, backtest):
     
     name = backtest.get('name')
     code = backtest.get('code')
+    config = backtest.get('params')
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -91,7 +99,7 @@ def execute_code_task(self, backtest):
             nonlocal container
             container, temp_dir = await pool.acquire_container_async()
             data_frame = await async_fetch_data(name)
-            code_path, data_path = await prepare_files(temp_dir, code, data_frame)
+            code_path, data_path, config_path = await prepare_files(temp_dir, code, data_frame, config)
 
             exec_result = await asyncio.to_thread(
                 container.exec_run,

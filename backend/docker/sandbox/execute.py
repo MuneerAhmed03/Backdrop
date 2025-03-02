@@ -45,6 +45,11 @@ def load_data():
         
         code_path = '/host_tmpfs/code.py'  
         data_path = '/host_tmpfs/data.pkl'  
+        config_path = '/host_tmpfs/config.txt'
+
+        if not os.path.exists(config_path):
+            logger.error(f"Config file not found: {code_path}")
+            sys.exit(2)
 
         if not os.path.exists(code_path):
             logger.error(f"Code file not found: {code_path}")
@@ -61,7 +66,14 @@ def load_data():
             df = pickle.load(data_file) 
             logger.info(f"Successfully read data from {data_path}")
 
-        return code, df
+        with open(config_path, 'r') as config_file:
+            config={}
+            for line in config_file:
+                key,value= line.strip().split('=')
+                config[key]=float(value)
+
+        return code, df, config
+    
     except Exception as e:
         logger.error(f"Data loading error: {str(e)}")
         sys.exit(2)
@@ -84,7 +96,7 @@ if __name__ == "__main__":
     stderr_messages = []  
     try:
         logger.info("Starting execution of backtest code")
-        code, df = load_data()
+        code, df, config = load_data()
 
         try:
             validate_user_code(code)
@@ -113,6 +125,8 @@ if __name__ == "__main__":
         try: 
             loss_cutting_strategy = UserStrategy(
                 df.copy(),
+                initial_capital=config['initialCapital'],
+                investment_per_trade=config['investmentPerTrade'],
                 trading_method=0
             )
             # risk_reduction_strategy = UserStrategy(

@@ -122,7 +122,7 @@ class CodeExecutionView(APIView):
             
         backtest = request.data.get('backtest')
         name = backtest.get("name")
-        logger.info(f"backtest request recieved {name}")
+        logger.info(f"backtest request recieved {backtest}")
         if not backtest:
             return Response({'error': 'missing code'}, status=status.HTTP_400_BAD_REQUEST)
             

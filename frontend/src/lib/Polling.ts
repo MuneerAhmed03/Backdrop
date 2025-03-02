@@ -35,18 +35,38 @@ const useCodeExecution = () => {
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function executeCode(code: string, name: string) {
+  async function executeCode(
+    code: string, 
+    name: string, 
+    startDate: string, 
+    endDate: string,
+    initialCapital: number,
+    investmentPerTrade: number
+  ) {
     try {
       setResult(null);
       setError(null);
       setIsLoading(true);
 
-      const response = await fetch("http://localhost:8001/engine/execute/", {
-        method: "POST",
+      const response = await fetch('http://localhost:8001/engine/execute/', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ backtest: { code, name } }),
+        body: JSON.stringify({
+          backtest: {
+            code,
+            name,
+            range: {
+              from: startDate,
+              to: endDate,
+            },
+            params: {
+              initialCapital,
+              investmentPerTrade,
+            },
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -56,7 +76,7 @@ const useCodeExecution = () => {
       const { task_id, status_url } = await response.json();
       console.log(`Task ID: ${task_id}`);
 
-      await pollTaskStatus(status_url); // Only calling it now, no need to return anything
+      await pollTaskStatus(status_url); 
     } catch (err: any) {
       setIsLoading(false);
       setError(err.message || "An unknown error occurred");
