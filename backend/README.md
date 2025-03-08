@@ -10,12 +10,11 @@ RUNTIME_CELERY=true celery -A config.celery:app worker -l info -Q execution_queu
 
 http://127.0.0.1:8000/engine/execute/  
 
-uvicorn config.asgi:application --reload --host 0.0.0.0 --port 8000
+uvicorn config.asgi:application --reload --host 0.0.0.0 --port 8001 --timeout-keep-alive 70 
 
 gunicorn config.wsgi:application --bind 127.0.0.1:8001 --keep-alive 60
 
 //TODO
-- number formating
 - soft login wall
 - rate limitting
 - template strategies and user strategies

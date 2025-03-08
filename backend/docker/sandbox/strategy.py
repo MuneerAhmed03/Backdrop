@@ -54,7 +54,6 @@ class BaseStrategy(ABC):
         self.trading_method = trading_method
         self.max_positions = -1;
 
-
     @abstractmethod
     def generate_signals(self) -> None:
         """Subclasses must implement this method and add a 'signal' column to `self.data`."""
@@ -130,7 +129,7 @@ class BaseStrategy(ABC):
         excess_returns = returns - risk_free_rate / 252
         downside_returns = excess_returns[excess_returns < 0]
         if len(downside_returns) == 0:
-            return "∞" if excess_returns.mean() > 0 else 0.0
+            return "∞" if excess_returns.mean() > 0 else 0.0                                                                                                                ll
         return np.sqrt(252) * excess_returns.mean() / downside_returns.std()
 
     def _close_trade(self, trade:Trade , exit_price,index_pos):
@@ -150,10 +149,10 @@ class BaseStrategy(ABC):
         signals = self.data['signal']
         self.openTrades = []
         heapq.heapify(self.openTrades)
-
+        loop_count =0
         for i in range(1, len(self.data)):
             price = self.data['close'].iloc[i]
-
+            loop_count+=1;
             if signals.iloc[i] == 1:
                 quantity = self.investment_per_trade // price
 
@@ -211,7 +210,7 @@ class BaseStrategy(ABC):
                 trade_to_close = self.trades[trade_index]
                 self._close_trade(trade_to_close, last_price, len(self.data) - 1)
 
-
+        # print(f"loop_count = {loop_count}")
         equity_curve_data = [
             {"date": str(date), "value": value}
             for date, value in self.equityCurve.items()

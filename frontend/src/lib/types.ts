@@ -32,18 +32,43 @@ export type StrategyResult = {
   equityCurve: CurvePoint[];
   drawdownCurve: CurvePoint[];
   trades: Trade[];
-  totalReturn: number; // 
-  totalReturnPct: number; // 
-  sharpeRatio: number; //
+  totalReturn: number; 
+  totalReturnPct: number; 
+  sharpeRatio: number; 
   maxDrawdown: number; 
-  maxDrawdownPct: number; // 
-  winRate: number; // 
-  profitFactor: number | string; //
-  numTrades: number; // 
-  avgTradePnl: number; // 
+  maxDrawdownPct: number; 
+  winRate: number; 
+  profitFactor: number | string; 
+  numTrades: number; 
+  avgTradePnl: number; 
   avgWinnerPnl: number | string;
   avgLoserPnl: number | string ;
   annualizedVolatility: number;
-  calmarRatio: number | string; //
-  sortinoRatio: number | string ; //
+  calmarRatio: number | string;
+  sortinoRatio: number | string ;
 };
+
+export type Template = {
+  id:number;
+  title:string;
+  description:string;
+  code?:string;
+  tags?:string
+}
+
+
+// interface BaseStrategy {
+//   id: number;
+//   title: string;
+//   description: string | null;
+// }
+
+// interface TemplateStrategy extends BaseStrategy {
+//   code: string;
+//   tags: string | null;
+// }
+
+// interface UserStrategy extends BaseStrategy {
+//   author: string; // since you're using StringRelatedField
+//   code: string;
+// }

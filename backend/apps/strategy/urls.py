@@ -15,7 +15,7 @@ urlpatterns = [
     path('retrieve/<int:pk>/', views.GetUserStrategyByIdView.as_view(), name='get-strategy'),
     
     # get all templates publix
-    path('templates/', views.GetTemplateStrategiesView.as_view(), name='get-templates'),
+    path('templates/', views.GetTemplateMetadatView.as_view(), name='get-templates'),
     
     # get template by id (public)
     path('template/<int:pk>/', views.GetTemplateStrategyByIdView.as_view(), name='get-template'),

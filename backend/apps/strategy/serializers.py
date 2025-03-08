@@ -3,7 +3,7 @@ from .models import UserStrategy , TemplateStrategy
 
 class BaseModelSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ['id' , 'title', 'description', 'code' , 'created_at', 'updated_at']
+        fields = ['id' , 'title', 'description']
         abstract = True
 
 class UserSerializer(BaseModelSerializer):
@@ -11,10 +11,15 @@ class UserSerializer(BaseModelSerializer):
 
     class Meta(BaseModelSerializer.Meta):
         model = UserStrategy
-        fields = BaseModelSerializer.Meta.fields + ['author']
+        fields = BaseModelSerializer.Meta.fields + ['author','code']
 
 
 class TemplateSerializer(BaseModelSerializer):
     class Meta(BaseModelSerializer.Meta):
         model = TemplateStrategy
-        fields = BaseModelSerializer.Meta.fields + ['tags'] 
+        fields = BaseModelSerializer.Meta.fields + ['code']
+
+class TemplateListSerializer(BaseModelSerializer):
+    class Meta(BaseModelSerializer.Meta):
+        model  = TemplateStrategy 
+        fields = BaseModelSerializer.Meta.fields + ['tags']

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 function printKeys(obj: Record<string, any>, prefix: string = "") {
   for (const key in obj) {
@@ -20,6 +20,16 @@ const useCodeExecution = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const parsedResult = useMemo(() => {
+    if (!result) return null;
+    try {
+      return JSON.parse(result.stdout).results.loss_cutting;
+    } catch (e) {
+      console.error('Failed to parse result:', e);
+      return null;
+    }
+  }, [result]);
 
   async function executeCode(
     code: string, 
@@ -83,13 +93,13 @@ const useCodeExecution = () => {
         const data = await response.json();
 
         if (data.status === "completed") {
-          if(
-            JSON.parse(data.result.stdout).results.loss_cutting === JSON.parse(data.result.stdout).results.risk_reduction 
-          ){
-            console.log("true");
-          }else{
-            console.log("false");
-          }
+
+          // console.log(`data ${data.result}`)
+          // const jsonobject = JSON.parse(data.result.stdout).results.loss_cutting
+          // const keys = Object.keys(jsonobject)
+          // keys.forEach((key) => {
+          //   console.log(key);
+          // });
           setResult(data.result);
           setIsLoading(false);
           return;
@@ -114,6 +124,7 @@ const useCodeExecution = () => {
     isLoading,
     result,
     error,
+    parsedResult,
   };
 };
 

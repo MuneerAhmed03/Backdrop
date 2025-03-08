@@ -47,7 +47,7 @@ export default function Executor() {
   const [instrument, setInstrument] = useState<StockDataResponse | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const [strategy,setStrategy]=useState<string>("Risk Reduction");
-  const {executeCode, isLoading, result, error} = useCodeExecution();
+  const {executeCode, isLoading, result, error,parsedResult} = useCodeExecution();
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const today = new Date();
     const oneWeekAgo = new Date(today);
@@ -130,6 +130,10 @@ export default function Executor() {
       resultRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
+
+  const handleCodeSelect = useCallback((newCode: string) => {
+    setCode(newCode);
+  }, []); 
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-background/80">
@@ -231,13 +235,13 @@ export default function Executor() {
       <TemplatesModal
         isOpen={showTemplates}
         onClose={() => setShowTemplates(false)}
+        onSelect={handleCodeSelect}
       />
 
-      {/* Results Section */}
       <div ref={resultRef} className="w-full">
         {(isLoading || result) && (
           <Result 
-            data={result ? JSON.parse(result.stdout).results.loss_cutting : null} 
+            data={parsedResult} 
             isLoading={isLoading}
             onStrategySelect={setStrategy}
           />

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .serializers import UserSerializer, TemplateSerializer
+from .serializers import UserSerializer, TemplateSerializer,    TemplateListSerializer
 from .models import UserStrategy, TemplateStrategy
 
 class isAdmin(permissions.BasePermission):
@@ -9,14 +9,19 @@ class isAdmin(permissions.BasePermission):
         return request.user and request.user.is_staff
     
 class AddTemplateView(APIView):
-    permission_classes = [isAdmin]
+    # permission_classes = [isAdmin]
+    authentication_classes = []  # public
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        serializer = TemplateSerializer(data=request.data) 
+        data = request.data
+        serializer = TemplateSerializer(data=data, many=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Successfully added template"}, status=status.HTTP_201_CREATED)
-        return Response({"message": "Error adding template"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": f"Successfully added {len(data)} templates"}, 
+                          status=status.HTTP_201_CREATED)
+        return Response({"errors": serializer.errors}, 
+                      status=status.HTTP_400_BAD_REQUEST)
 
 class AddOrUpdateUserStrategyView(APIView):
     def post(self, request):
@@ -51,24 +56,24 @@ class GetUserStrategyByIdView(APIView):
         except UserStrategy.DoesNotExist:
             return Response({"error": "Strategy Doesn't Exist"}, status=status.HTTP_404_NOT_FOUND)
         
-class GetTemplateStrategiesView(APIView):
-    authentication_classes = []  # public
+class GetTemplateMetadatView(APIView):
+    authentication_classes = []  
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         templates = TemplateStrategy.objects.all()
-        serializer = TemplateSerializer(templates, many=True)
+        serializer = TemplateListSerializer(templates, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 class GetTemplateStrategyByIdView(APIView):
-    authentication_classes = []  # public
+    authentication_classes = [] 
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, pk):
         try:
             template = TemplateStrategy.objects.get(id=pk)
-            serializer = TemplateSerializer(template)
-            return Response(serializer.data)
+            print(template);
+            return Response({"code" : template.code})
         except TemplateStrategy.DoesNotExist:
             return Response({"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -80,3 +85,4 @@ class DeleteUserStrategyView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except UserStrategy.DoesNotExist:
             return Response({"error": "Strategy not found"}, status=status.HTTP_404_NOT_FOUND)
+
