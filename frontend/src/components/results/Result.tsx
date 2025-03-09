@@ -1,43 +1,13 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import React from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { StrategyResult } from "@/lib/types"
-
-const formatters = {
-  currency: new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }),
-  percent: new Intl.NumberFormat('en-IN', { style: 'percent', minimumFractionDigits: 2 }),
-  decimal: new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 })
-};
-
-const ratioDescriptions = {
-  sharpeRatio: "Measures risk-adjusted returns using the risk-free rate and standard deviation of returns",
-  calmarRatio: "Compares average annual compounded returns to maximum drawdown risk",
-  sortinoRatio: "Similar to Sharpe ratio but only considers downside volatility",
-  profitFactor: "Ratio of gross profits to gross losses"
-};
-
-const RatioCard = ({ label, value, description }: { label: string; value: number | string; description: string }) => (
-  <div className="group relative metric-card">
-    <div className="text-sm text-gray-400">{label}</div>
-    <div className="text-xl font-semibold">{typeof value === "number" ? formatters.decimal.format(value) : value}</div>
-    <div className="ratio-tooltip">
-      {description}
-    </div>
-  </div>
-);
-
-const SkeletonCard = () => (
-  <div className="metric-card animate-pulse motion-safe:[animation-duration:3s]">
-    <div className="h-4 w-24 bg-gray-700/50 rounded mb-2"></div>
-    <div className="h-6 w-32 bg-gray-700/50 rounded"></div>
-  </div>
-);
-
-const SkeletonChart = () => (
-  <div className="h-64 glassmorphism p-4 rounded-lg animate-pulse motion-safe:[animation-duration:3s]">
-    <div className="w-full h-full bg-gray-700/50 rounded"></div>
-  </div>
-);
+import { StrategyResult } from "@/lib/types";
+import { formatters, formatIndianNumber } from "@/utils/formatters";
+import { safeCalculations } from "@/utils/calculations";
+import { ratioDescriptions } from "@/components/results/ratioDescriptions";
+import { RatioCard } from "./RatioCard";
+import { SkeletonCard, SkeletonChart } from "./LoadingStates";
+import { ResultErrorBoundary } from "./ErrorBoundary";
 
 interface ChartDataPoint {
   date: string;
@@ -49,80 +19,6 @@ interface ResultProps {
   data: StrategyResult | null;
   isLoading: boolean;
   onStrategySelect?: (strategy: string) => void;
-}
-
-// utility functions for safe calculations
-const safeCalculations = {
-  getMinMax: (data: ChartDataPoint[]) => {
-    if (!data || data.length === 0) return { min: 0, max: 0 };
-    return data.reduce(
-      (acc, d) => ({
-        min: Math.min(acc.min, d.equity),
-        max: Math.max(acc.max, d.equity),
-      }),
-      { min: data[0].equity, max: data[0].equity }
-    );
-  },
-  
-  calculateDrawdownTicks: (values: number[]) => {
-    if (!values || values.length === 0) return [0];
-    const maxDrawdown = Math.max(...values);
-    if (maxDrawdown <= 0) return [0];
-    
-    const range = maxDrawdown;
-    let step = Math.ceil(range / 5);
-    step = Math.ceil(step / 5) * 5;
-    
-    const ticks = [0];
-    let currentTick = step;
-    
-    // Prevent infinite loops and invalid array lengths
-    const maxTicks = 20;
-    while (currentTick <= maxDrawdown && ticks.length < maxTicks) {
-      ticks.push(currentTick);
-      currentTick += step;
-    }
-    
-    if (maxDrawdown > ticks[ticks.length - 1] && 
-        (maxDrawdown - ticks[ticks.length - 1]) > step * 0.3) {
-      ticks.push(Math.ceil(maxDrawdown));
-    }
-    
-    return ticks;
-  }
-};
-
-const ErrorFallback = ({ error }: { error: Error }) => (
-  <div className="min-h-screen bg-background text-foreground p-6">
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-        <h2 className="text-lg font-semibold text-red-500">Error Loading Results</h2>
-        <p className="text-sm text-red-400">{error.message}</p>
-      </div>
-    </div>
-  </div>
-);
-
-class ResultErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <ErrorFallback error={this.state.error!} />;
-    }
-
-    return this.props.children;
-  }
 }
 
 const NoDataState = () => (
@@ -139,13 +35,12 @@ const NoDataState = () => (
   </div>
 );
 
-const Index = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) => {
+const Result = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) => {
   const [syncedTooltipIndex, setSyncedTooltipIndex] = useState<number | null>(null);
   const equityChartRef = useRef<any>(null);
   const drawdownChartRef = useRef<any>(null);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
-  // Memoize chart data processing
   const processedChartData = useMemo(() => {
     if (!data?.equityCurve) return [];
     return data.equityCurve.map((point, index) => ({
@@ -161,23 +56,12 @@ const Index = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) =
     }
   }, [data, processedChartData]);
 
-  const formatIndianNumber = (value: number) => {
-    if (value >= 1_00_00_000) {
-      return (value / 1_00_00_000).toFixed(1).replace(/\.0$/, '') + 'Cr';
-    } else if (value >= 1_00_000) {
-      return (value / 1_00_000).toFixed(1).replace(/\.0$/, '') + 'L';
-    } else if (value >= 1_000) {
-      return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
-    }
-    return value.toString();
-  };
-
   const { min, max } = safeCalculations.getMinMax(chartData);
 
   const upperMax = min === max ? max + 100 : Math.ceil(max / 100) * 100;
   const lowerMin = min === max ? min - 100 : Math.floor(min / 100) * 100;
   const range = upperMax - lowerMin;
-  const step = Math.max(Math.ceil(range / 5 / 100) * 100, 100); // Ensure minimum step of 100
+  const step = Math.max(Math.ceil(range / 5 / 100) * 100, 100);
 
   const ticks = useMemo(() => {
     if (upperMax === lowerMin) {
@@ -208,7 +92,6 @@ const Index = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) =
     }
   };
 
-  // Check for no trading activity
   const hasNoTrades = useMemo(() => {
     if (!data) return false;
     return data.numTrades === 0 && data.totalReturn === 0;
@@ -247,15 +130,6 @@ const Index = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) =
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Backtest Result</h1>
-            {/* <Select defaultValue="Loss Cutting" onValueChange={onStrategySelect}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select strategy" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Loss Cutting">Loss Cutting</SelectItem>
-                <SelectItem value="Risk Reduction">Risk Reduction</SelectItem>
-              </SelectContent>
-            </Select> */}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slideUp">
             <div className="metric-card">
@@ -443,4 +317,4 @@ const Index = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) =
   );
 };
 
-export default Index;
+export default Result;
