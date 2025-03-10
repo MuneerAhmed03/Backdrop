@@ -56,6 +56,11 @@ export type Template = {
   tags?:string
 }
 
+export interface ChartDataPoint {
+  date: string;
+  equity: number;
+  drawdown: number;
+}
 
 // interface BaseStrategy {
 //   id: number;

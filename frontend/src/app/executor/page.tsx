@@ -12,6 +12,7 @@ import Result from "@/components/results/Result"
 import DatePicker from "@/components/results/DatePicker"
 import DateRangePicker from "@/components/results/DatePicker";
 import { DateRange } from "react-day-picker";
+import { useStrategyValidation } from '@/lib/useStrategyValidation';
 
 
 const DEFAULT_CODE = `
@@ -62,6 +63,7 @@ export default function Executor() {
   });
   const [initialCapital, setInitialCapital] = useState<number>(100000);
   const [investmentPerTrade, setInvestmentPerTrade] = useState<number>(10000);
+  const validation = useStrategyValidation();
 
   
   const parameterPaneWidth = useMemo(() => {
@@ -114,11 +116,25 @@ export default function Executor() {
     };
   }, [isResizing, handleMouseMove]);
 
+  useEffect(() => {
+    console.log("updated parameters")
+    validation.validateStrategy({
+      instrument : instrument as StockDataResponse,
+      dateRange,
+      initialCapital,
+      investmentPerTrade
+    });
+  }, [instrument, dateRange, initialCapital, investmentPerTrade]);
+
   const handleRunStrategy = async () => {
+    if (!validation.isValid) {
+      return;
+    }
+
     if (dateRange.from && dateRange.to) {
       executeCode(
-        code, 
-        instrument?.source_file || "20microns.csv", 
+        code,
+        instrument?.source_file || "20microns.csv",
         dateRange.from.toISOString().split('T')[0],
         dateRange.to.toISOString().split('T')[0],
         initialCapital,
@@ -140,6 +156,8 @@ export default function Executor() {
       <Header
         onRunStrategy={handleRunStrategy}
         onShowTemplates={() => setShowTemplates(true)}
+        isRunDisabled={!validation.isValid || isLoading}
+        validationErrors={validation.errors}
       />
       <div className="flex-1 flex">
         <div 
@@ -147,7 +165,11 @@ export default function Executor() {
           className="p-4 min-w-[50%] max-w-[67%]"
         >
           <div className="w-full h-full bg-card/80 backdrop-blur-xl overflow-hidden shadow-lg">
-            <CodeEditor value={code} onChange={setCode} />
+            <CodeEditor 
+              value={code} 
+              onChange={setCode}
+              onValidationChange={validation.updateCodeValidation}
+            />
           </div>
         </div>
 

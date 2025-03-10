@@ -8,12 +8,8 @@ import { ratioDescriptions } from "@/components/results/ratioDescriptions";
 import { RatioCard } from "./RatioCard";
 import { SkeletonCard, SkeletonChart } from "./LoadingStates";
 import { ResultErrorBoundary } from "./ErrorBoundary";
+import { ChartDataPoint } from "@/lib/types";
 
-interface ChartDataPoint {
-  date: string;
-  equity: number;
-  drawdown: number;
-}
 
 interface ResultProps {
   data: StrategyResult | null;

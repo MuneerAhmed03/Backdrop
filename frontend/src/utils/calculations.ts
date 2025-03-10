@@ -1,9 +1,4 @@
-interface ChartDataPoint {
-  date: string;
-  equity: number;
-  drawdown: number;
-}
-
+import { ChartDataPoint } from "../lib/types";
 export const safeCalculations = {
   getMinMax: (data: ChartDataPoint[]) => {
     if (!data || data.length === 0) return { min: 0, max: 0 };
