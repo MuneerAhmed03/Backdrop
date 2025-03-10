@@ -39,6 +39,13 @@ const DEFAULT_CODE = `
     """   
 `;
 
+interface ExecutionError {
+  error?: string;
+  warnings?: string[];
+  stderr?: string;
+  exit_code?: number;
+}
+
 export default function Executor() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showParameters, setShowParameters] = useState(true);
@@ -64,6 +71,7 @@ export default function Executor() {
   const [initialCapital, setInitialCapital] = useState<number>(100000);
   const [investmentPerTrade, setInvestmentPerTrade] = useState<number>(10000);
   const validation = useStrategyValidation();
+  const [executionError, setExecutionError] = useState<ExecutionError | null>(null);
 
   
   const parameterPaneWidth = useMemo(() => {
@@ -131,6 +139,8 @@ export default function Executor() {
       return;
     }
 
+    setExecutionError(null); // Reset error state before running
+
     if (dateRange.from && dateRange.to) {
       executeCode(
         code,
@@ -146,6 +156,30 @@ export default function Executor() {
       resultRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
+
+  useEffect(() => {
+    if (result) {
+      try {
+        const resultData = JSON.parse(result.stdout);
+        if (result.exit_code !== 0 || resultData.error) {
+          setExecutionError({
+            error: resultData.error,
+            warnings: resultData.warnings,
+            stderr: result.stderr,
+            exit_code: result.exit_code
+          });
+        } else {
+          setExecutionError(null);
+        }
+      } catch (e) {
+        setExecutionError({
+          error: "Failed to parse execution result",
+          stderr: result.stderr,
+          exit_code: result.exit_code
+        });
+      }
+    }
+  }, [result]);
 
   const handleCodeSelect = useCallback((newCode: string) => {
     setCode(newCode);
@@ -257,6 +291,7 @@ export default function Executor() {
           <Result 
             data={parsedResult} 
             isLoading={isLoading}
+            error={executionError}
             onStrategySelect={setStrategy}
           />
         )}

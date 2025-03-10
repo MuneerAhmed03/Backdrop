@@ -9,11 +9,19 @@ import { RatioCard } from "./RatioCard";
 import { SkeletonCard, SkeletonChart } from "./LoadingStates";
 import { ResultErrorBoundary } from "./ErrorBoundary";
 import { ChartDataPoint } from "@/lib/types";
+import ErrorDisplay from "./ErrorDisplay";
 
+interface ExecutionError {
+  error?: string;
+  warnings?: string[];
+  stderr?: string;
+  exit_code?: number;
+}
 
 interface ResultProps {
   data: StrategyResult | null;
   isLoading: boolean;
+  error?: ExecutionError | null;
   onStrategySelect?: (strategy: string) => void;
 }
 
@@ -31,7 +39,7 @@ const NoDataState = () => (
   </div>
 );
 
-const Result = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) => {
+const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: ResultProps) => {
   const [syncedTooltipIndex, setSyncedTooltipIndex] = useState<number | null>(null);
   const equityChartRef = useRef<any>(null);
   const drawdownChartRef = useRef<any>(null);
@@ -115,6 +123,10 @@ const Result = ({ data, isLoading, onStrategySelect = () => { } }: ResultProps) 
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    return <ErrorDisplay error={error} />;
   }
 
   if (!data) return null;

@@ -1,30 +1,40 @@
 import { useState, useMemo } from "react";
 
-function printKeys(obj: Record<string, any>, prefix: string = "") {
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const newKey = prefix ? `${prefix}.${key}` : key;
-      console.log(newKey); 
-
-      if (typeof obj[key] === "object" && obj[key] !== null) {
-        printKeys(obj[key], newKey); 
-      }
-    }
-  }
+interface ExecutionResult {
+  exit_code: number;
+  stdout: string;
+  stderr: string;
 }
 
-
-
+interface ParsedResponse {
+  error?: string;
+  warnings?: string[] | null;
+  results?: {
+    loss_cutting?: any;
+  };
+}
 
 const useCodeExecution = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [result, setResult] = useState<any | null>(null);
+  const [result, setResult] = useState<ExecutionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const parsedResult = useMemo(() => {
-    if (!result) return null;
+    if (!result?.stdout) return null;
+
     try {
-      return JSON.parse(result.stdout).results.loss_cutting;
+      const parsed: ParsedResponse = JSON.parse(result.stdout);
+
+      if (parsed.error || result.exit_code !== 0) {
+        return null;
+      }
+
+      if (!parsed.results?.loss_cutting) {
+        console.error('Unexpected response structure:', parsed);
+        return null;
+      }
+
+      return parsed.results.loss_cutting;
     } catch (e) {
       console.error('Failed to parse result:', e);
       return null;
@@ -66,7 +76,7 @@ const useCodeExecution = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to execute code: ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const { task_id, status_url } = await response.json();
@@ -74,13 +84,26 @@ const useCodeExecution = () => {
 
       await pollTaskStatus(status_url); 
     } catch (err: any) {
-      setIsLoading(false);
-      setError(err.message || "An unknown error occurred");
+      handleError(err);
     }
   }
 
+  const handleError = (err: Error) => {
+    setIsLoading(false);
+    setError(err.message || "An unknown error occurred");
+    setResult({
+      exit_code: 1,
+      stdout: JSON.stringify({ 
+        error: err.message,
+        warnings: null 
+      }),
+      stderr: err.stack || "No stack trace available"
+    });
+  };
+
   async function pollTaskStatus(status_url: string) {
     const poll_url = `http://localhost:8001${status_url}`;
+    const POLLING_INTERVAL = 1000; // 1 second
 
     while (true) {
       try {
@@ -93,27 +116,18 @@ const useCodeExecution = () => {
         const data = await response.json();
 
         if (data.status === "completed") {
-
-          // console.log(`data ${data.result}`)
-          // const jsonobject = JSON.parse(data.result.stdout).results.loss_cutting
-          // const keys = Object.keys(jsonobject)
-          // keys.forEach((key) => {
-          //   console.log(key);
-          // });
           setResult(data.result);
           setIsLoading(false);
           return;
         } else if (data.status === "error") {
-          setError(data.error || "Execution failed");
-          setIsLoading(false);
+          handleError(new Error(data.error || "Execution failed"));
           return;
-        } else {
-          console.log(`Task status: ${data.status}`);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
+
+        console.log(`Task status: ${data.status}`);
+        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
       } catch (err: any) {
-        setError(err.message || "Polling error");
-        setIsLoading(false);
+        handleError(err);
         return;
       }
     }
