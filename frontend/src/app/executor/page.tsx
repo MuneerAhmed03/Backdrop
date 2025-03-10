@@ -9,7 +9,7 @@ import SearchBar from "@/components/executor/SearchBar";
 import useCodeExecution  from "@/lib/Polling";
 import { StockDataResponse } from "@/lib/types";
 import Result from "@/components/results/Result"
-import DatePicker from "@/components/results/DatePicker"
+import NumberInput from "@/components/ui/NumberInput"
 import DateRangePicker from "@/components/results/DatePicker";
 import { DateRange } from "react-day-picker";
 import { useStrategyValidation } from '@/lib/useStrategyValidation';
@@ -224,29 +224,21 @@ export default function Executor() {
                 <DateRangePicker onDateRangeChange={setDateRange} dateRange={dateRange}/>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-foreground/80">
-                  Initial Capital
-                </label>
-                <input
-                  type="number"
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
-                  placeholder="Enter amount"
+                <NumberInput
+                  label="Initial Capital"
                   value={initialCapital}
-                  onChange={(e) => setInitialCapital(Number(e.target.value))}
-                  min={0}
+                  onValueChange={(value) => setInitialCapital(value ?? 0)}
+                  placeholder="Enter amount"
+                  className="w-full h-10"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-foreground/80">
-                  Investment Per Trade
-                </label>
-                <input
-                  type="number"
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
-                  placeholder="Enter amount"
+                <NumberInput
+                  label="Investment Per Trade"
                   value={investmentPerTrade}
-                  onChange={(e) => setInvestmentPerTrade(Number(e.target.value))}
-                  min={0}
+                  onValueChange={(value) => setInvestmentPerTrade(value ?? 0)}
+                  placeholder="Enter amount"
+                  className="w-full h-10"
                 />
               </div>
             </div>
