@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .serializers import UserSerializer, TemplateSerializer,    TemplateListSerializer
+from .serializers import UserSerializer, TemplateSerializer, TemplateListSerializer, UserListSerializer
 from .models import UserStrategy, TemplateStrategy
 
 class isAdmin(permissions.BasePermission):
@@ -45,15 +45,15 @@ class AddOrUpdateUserStrategyView(APIView):
 class GetUserStrategiesView(APIView):
     def get(self, request):
         strategies = UserStrategy.objects.filter(author=request.user).order_by('-updated_at')
-        serializer = UserSerializer(strategies, many=True)
-        return Response(serializer.data)
+        serializer = UserListSerializer(strategies, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 class GetUserStrategyByIdView(APIView):
     def get(self, request, pk):
         try:
             strategy = UserStrategy.objects.get(id=pk, author=request.user)
-            serializer = UserSerializer(strategy)  
-            return Response(serializer.data)
+            # serializer = UserSerializer(strategy)  
+            return Response({"code" : strategy.code})
         except UserStrategy.DoesNotExist:
             return Response({"error": "Strategy Doesn't Exist"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -73,7 +73,6 @@ class GetTemplateStrategyByIdView(APIView):
     def get(self, request, pk):
         try:
             template = TemplateStrategy.objects.get(id=pk)
-            print(template);
             return Response({"code" : template.code})
         except TemplateStrategy.DoesNotExist:
             return Response({"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND)

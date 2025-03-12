@@ -13,6 +13,10 @@ class UserSerializer(BaseModelSerializer):
         model = UserStrategy
         fields = BaseModelSerializer.Meta.fields + ['author','code']
 
+class UserListSerializer(BaseModelSerializer):
+    class Meta(BaseModelSerializer.Meta):
+        model  = UserStrategy
+        fields = BaseModelSerializer.Meta.fields
 
 class TemplateSerializer(BaseModelSerializer):
     class Meta(BaseModelSerializer.Meta):
