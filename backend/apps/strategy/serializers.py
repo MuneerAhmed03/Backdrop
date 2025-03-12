@@ -7,7 +7,7 @@ class BaseModelSerializer(serializers.ModelSerializer):
         abstract = True
 
 class UserSerializer(BaseModelSerializer):
-    authors = serializers.StringRelatedField()
+    author = serializers.StringRelatedField()
 
     class Meta(BaseModelSerializer.Meta):
         model = UserStrategy

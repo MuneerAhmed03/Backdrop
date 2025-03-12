@@ -29,6 +29,7 @@ class AddOrUpdateUserStrategyView(APIView):
         if not title:
             return Response({"error": "Title Required"}, status=status.HTTP_400_BAD_REQUEST)
         
+        strategy = None
         try:
             strategy = UserStrategy.objects.get(title=title, author=request.user)
             serializer = UserSerializer(strategy, data=request.data, partial=True)

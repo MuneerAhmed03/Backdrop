@@ -192,6 +192,7 @@ export default function Executor() {
         onShowTemplates={() => setShowTemplates(true)}
         isRunDisabled={!validation.isValid || isLoading}
         validationErrors={validation.errors}
+        strategyContent={code}
       />
       <div className="flex-1 flex">
         <div 

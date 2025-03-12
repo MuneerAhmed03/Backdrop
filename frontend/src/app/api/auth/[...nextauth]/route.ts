@@ -40,7 +40,7 @@ const handler = NextAuth({
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         try {
-          const response = await fetch("http://localhost:8000/auth/create-user/", {
+          const response = await fetch("http://localhost:8001/auth/create-user/", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

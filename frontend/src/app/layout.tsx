@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { NextAuthProvider as Providers } from './providers'
 import PyodidLoader from "@/components/PyodideLoader"
+import { Toaster } from 'react-hot-toast'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,6 +23,28 @@ export default function RootLayout({
         <Providers>
           {/* <PyodidLoader/> */}
           {children}
+          <Toaster 
+            position="top-center"
+            toastOptions={{
+              className: 'dark:bg-gray-800 dark:text-white',
+              style: {
+                background: '#1f2937',
+                color: '#fff',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10B981',
+                  secondary: '#fff',
+                }
+              },
+              error: {
+                iconTheme: {
+                  primary: '#EF4444',
+                  secondary: '#fff',
+                }
+              }
+            }}
+          />
         </Providers>
       </body>
     </html>

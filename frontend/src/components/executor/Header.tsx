@@ -3,16 +3,23 @@
 import Link from 'next/link'
 import { LayoutTemplate, Play, Save } from 'lucide-react'
 import { AuthButton } from '../AuthButton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { SaveDialog } from './SaveDialog'
+import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 
 interface HeaderProps {
   onRunStrategy: () => void
   onShowTemplates: () => void
   isRunDisabled: boolean
   validationErrors: string[]
+  strategyContent: string
 }
 
-export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validationErrors }: HeaderProps) {
+export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validationErrors, strategyContent }: HeaderProps) {
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const { data: session } = useSession()
+
   return (
     <nav className="border-b border-border bg-card/80 backdrop-blur-xl h-16  top-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
@@ -62,10 +69,25 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
                 )}
               </Tooltip>
             </TooltipProvider>
-            <button className="hover:bg-accent/50 h-8 px-3 rounded-lg transition-colors flex items-center">
-              <Save className="w-4 h-4" />
-              Save
-            </button>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    onClick={() => session ? setIsSaveDialogOpen(true) : undefined}
+                    className={`hover:bg-accent/50 h-8 px-3 rounded-lg transition-colors flex items-center ${!session ? 'cursor-not-allowed opacity-50' : ''}`}
+                  >
+                    <Save className="w-4 h-4 mr-1.5" />
+                    Save
+                  </button>
+                </TooltipTrigger>
+                {!session && (
+                  <TooltipContent>
+                    <p>Login to save custom strategies</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
@@ -73,6 +95,12 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
           <AuthButton />
         </div>
       </div>
+
+      <SaveDialog 
+        isOpen={isSaveDialogOpen}
+        onClose={() => setIsSaveDialogOpen(false)}
+        strategyContent={strategyContent}
+      />
     </nav>
   )
 }
