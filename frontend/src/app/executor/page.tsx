@@ -199,7 +199,7 @@ export default function Executor() {
           style={{ width: editorWidth }} 
           className="p-4 min-w-[50%] max-w-[67%]"
         >
-          <div className="w-full h-full bg-card/80 backdrop-blur-xl overflow-hidden shadow-lg">
+          <div className="glassmorphism w-full h-full overflow-hidden">
             <CodeEditor 
               value={code} 
               onChange={setCode}
@@ -212,9 +212,9 @@ export default function Executor() {
           className="w-1 hover:bg-accent/50 cursor-col-resize relative group px-1"
           onMouseDown={handleMouseDown}
         >
-          <div className="absolute inset-y-0 -left-2 -right-2 " />
+          <div className="absolute inset-y-0 -left-2 -right-2" />
 
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-8 flex flex-col justify-center items-center gap-1 pointer-events-none ">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-8 flex flex-col justify-center items-center gap-1 pointer-events-none">
             <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
             <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
             <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground group-hover:bg-accent" />
@@ -223,7 +223,7 @@ export default function Executor() {
 
         <div
           style={{ width: showParameters ? parameterPaneWidth : 0 }}
-          className={`flex-shrink-0 border-l border-border bg-card/80 backdrop-blur-xl transition-all duration-300 ease-in-out ${
+          className={`flex-shrink-0 border-l border-border glassmorphism transition-all duration-300 ease-in-out ${
             showParameters ? "translate-x-0" : "translate-x-full"
           } ${isResizing ? "transition-none" : ""}`}
         >
@@ -237,7 +237,7 @@ export default function Executor() {
               className="hover:bg-accent/50 p-1 rounded-lg transition-colors"
             >
               <ChevronRight
-                className={`w-4 h-4 transition-transform duration-200 ${showParameters ? "rotate-180" : ""}`}
+                className={`w-4 h-4 transition-transform duration-300 ${showParameters ? "rotate-180" : ""}`}
               />
             </button>
           </div>

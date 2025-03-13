@@ -28,9 +28,9 @@ interface ResultProps {
 const NoDataState = () => (
   <div className="min-h-screen bg-background text-foreground p-6">
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-        <h2 className="text-lg font-semibold text-blue-500">No Trading Activity</h2>
-        <p className="text-sm text-blue-400">
+      <div className="neo-blur p-4 rounded-lg">
+        <h2 className="text-lg font-semibold text-primary">No Trading Activity</h2>
+        <p className="text-sm text-muted-foreground">
           There were no trades executed during the selected time period. 
           Try adjusting your strategy parameters or date range.
         </p>
@@ -103,7 +103,7 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background text-foreground p-6 animate-fadeIn">
+      <div className="min-h-screen bg-background text-foreground p-6 animate-fade-in">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <SkeletonCard />
@@ -134,26 +134,26 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
 
   return (
     <ResultErrorBoundary>
-      <div className="min-h-screen bg-background text-foreground p-6 animate-fadeIn">
+      <div className="min-h-screen bg-background text-foreground p-6 animate-fade-in">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Backtest Result</h1>
+            <h1 className="text-2xl font-bold text-gradient">Backtest Result</h1>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slideUp">
-            <div className="metric-card">
-              <div className="text-sm text-gray-400">Initial Capital</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-scale-up">
+            <div className="glassmorphism p-4 rounded-lg card-hover">
+              <div className="text-sm text-muted-foreground">Initial Capital</div>
               <div className="text-xl font-semibold">
                 {formatters.currency.format(data.initialCapital)}
               </div>
             </div>
-            <div className="metric-card">
-              <div className="text-sm text-gray-400">Final Capital</div>
-              <div className={`text-2xl font-bold text-profit`}>
+            <div className="glassmorphism p-4 rounded-lg card-hover">
+              <div className="text-sm text-muted-foreground">Final Capital</div>
+              <div className="text-2xl font-bold text-profit">
                 {formatters.currency.format(data.finalCapital)}
               </div>
             </div>
-            <div className="metric-card">
-              <div className="text-sm text-gray-400">Total Return</div>
+            <div className="glassmorphism p-4 rounded-lg card-hover">
+              <div className="text-sm text-muted-foreground">Total Return</div>
               <div className={`text-xl font-semibold ${data.totalReturn >= 0 ? 'text-profit' : 'text-loss'}`}>
                 {formatters.currency.format(data.totalReturn)}
                 <span className="text-sm ml-2">
@@ -172,15 +172,15 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                 >
                   <defs>
                     <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                      <stop offset="5%" stopColor="rgb(var(--glow-color))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="rgb(var(--glow-color))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-                  <XAxis dataKey="date" stroke="#6B7280" tick={{ fontSize: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
                   <YAxis
                     dataKey="equity"
-                    stroke="#6B7280"
+                    stroke="hsl(var(--muted-foreground))"
                     tickFormatter={(value) => formatIndianNumber(value)}
                     domain={['dataMin', 'dataMax']}
                     padding={{ top: 10, bottom: 10 }}
@@ -190,7 +190,8 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "rgba(0, 0, 0, 0.9)",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "var(--radius)",
                     }}
                     formatter={(value: any) => [
                       formatters.currency.format(value),
@@ -200,7 +201,7 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                   <Area
                     type="monotone"
                     dataKey="equity"
-                    stroke="#6366F1"
+                    stroke="rgb(var(--glow-color))"
                     fill="url(#equityGradient)"
                   />
                 </AreaChart>
@@ -215,15 +216,15 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                 >
                   <defs>
                     <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-                  <XAxis dataKey="date" stroke="#6B7280" tick={{ fontSize: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
                   <YAxis
                     dataKey="drawdown"
-                    stroke="#6B7280"
+                    stroke="hsl(var(--muted-foreground))"
                     tickFormatter={(value) => `${value.toFixed(2)}%`}
                     domain={[
                       (dataMin: number) => Math.min(0, Math.floor(dataMin / 5) * 5),
@@ -240,7 +241,8 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "rgba(0, 0, 0, 0.9)",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "var(--radius)",
                     }}
                     formatter={(value: any) => [
                       `${Number(value).toFixed(2)}%`,
@@ -250,7 +252,7 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                   <Area
                     type="monotone"
                     dataKey="drawdown"
-                    stroke="#EF4444"
+                    stroke="hsl(var(--destructive))"
                     fill="url(#drawdownGradient)"
                   />
                 </AreaChart>
@@ -259,22 +261,22 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <RatioCard
-              label="Sharpe Ratio"
+              title="Sharpe Ratio"
               value={data.sharpeRatio}
               description={ratioDescriptions.sharpeRatio}
             />
             <RatioCard
-              label="Calmar Ratio"
+              title="Calmar Ratio"
               value={data.calmarRatio}
               description={ratioDescriptions.calmarRatio}
             />
             <RatioCard
-              label="Sortino Ratio"
+              title="Sortino Ratio"
               value={data.sortinoRatio}
               description={ratioDescriptions.sortinoRatio}
             />
             <RatioCard
-              label="Profit Factor"
+              title="Profit Factor"
               value={data.profitFactor}
               description={ratioDescriptions.profitFactor}
             />

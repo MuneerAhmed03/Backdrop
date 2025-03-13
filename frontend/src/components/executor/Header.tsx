@@ -21,10 +21,10 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
   const { data: session } = useSession()
 
   return (
-    <nav className="border-b border-border bg-card/80 backdrop-blur-xl h-16  top-0 w-full z-50">
+    <nav className="border-b border-border glassmorphism h-16 top-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <Link href="/" className="text-xl font-bold text-gradient">
             Backdrop
           </Link>
           <div className="h-6 w-px bg-border" />
@@ -75,7 +75,7 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
                 <TooltipTrigger asChild>
                   <button 
                     onClick={() => session ? setIsSaveDialogOpen(true) : undefined}
-                    className={`hover:bg-accent/50 h-8 px-3 rounded-lg transition-colors flex items-center ${!session ? 'cursor-not-allowed opacity-50' : ''}`}
+                    className={`hover:bg-accent/50 h-8 px-3 rounded-lg transition-colors flex items-center ${!session ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <Save className="w-4 h-4 mr-1.5" />
                     Save

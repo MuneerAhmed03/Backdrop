@@ -121,7 +121,7 @@ export function TemplatesModal({ isOpen, onClose, onSelect }: TemplatesModalProp
   const renderSkeletons = () => (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="p-4 rounded-xl border border-border bg-card animate-pulse">
+        <div key={i} className="glassmorphism p-4 rounded-xl animate-pulse">
           <div className="h-6 w-3/4 bg-muted rounded mb-2" />
           <div className="h-4 w-full bg-muted rounded opacity-50" />
         </div>
@@ -136,7 +136,7 @@ export function TemplatesModal({ isOpen, onClose, onSelect }: TemplatesModalProp
       <button
         key={item.id}
         onClick={onClick}
-        className="p-4 rounded-xl border border-border bg-card hover:border-primary hover:shadow-[0_0_15px_rgba(var(--primary),0.1)] transition-all text-left group"
+        className="neo-blur p-4 rounded-xl card-hover text-left group"
       >
         <h3 className="font-medium mb-2 group-hover:text-primary transition-colors">
           {item.title}
@@ -196,8 +196,8 @@ export function TemplatesModal({ isOpen, onClose, onSelect }: TemplatesModalProp
   }
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn">
-      <div className="w-full max-w-4xl max-h-[80vh] overflow-auto bg-card rounded-2xl shadow-lg border border-border animate-slideUp">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
+      <div className="w-full max-w-4xl max-h-[80vh] overflow-auto glassmorphism rounded-2xl animate-scale-up">
         <div className="border-b border-border p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
