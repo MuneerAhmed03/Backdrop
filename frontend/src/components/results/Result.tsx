@@ -48,11 +48,15 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
   const processedChartData = useMemo(() => {
     if (!data?.equityCurve) return [];
     return data.equityCurve.map((point, index) => ({
-      date: new Date(point.date).toLocaleDateString(),
+      date: point.date,
       equity: point.value,
       drawdown: (data.drawdownCurve[index]?.value ?? 0) * 100
     }));
   }, [data]);
+
+  const dateTicks = useMemo(() => {
+    return safeCalculations.calculateDateTicks(chartData);
+  }, [chartData]);
 
   useEffect(() => {
     if (data) {
@@ -177,7 +181,19 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    tick={{ fontSize: 12 }}
+                    ticks={dateTicks.ticks.map(d => d.toISOString().split('T')[0])}
+                    tickFormatter={(date) => {
+                      const d = new Date(date);
+                      if (dateTicks.format === 'mm/yy') {
+                        return `${d.getMonth() + 1}/${d.getFullYear().toString().slice(-2)}`;
+                      }
+                      return `${d.getDate()}/${d.getMonth() + 1}`;
+                    }}
+                  />
                   <YAxis
                     dataKey="equity"
                     stroke="hsl(var(--muted-foreground))"
@@ -221,7 +237,19 @@ const Result = ({ data, isLoading, error, onStrategySelect = () => { } }: Result
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    tick={{ fontSize: 12 }}
+                    ticks={dateTicks.ticks.map(d => d.toISOString().split('T')[0])}
+                    tickFormatter={(date) => {
+                      const d = new Date(date);
+                      if (dateTicks.format === 'mm/yy') {
+                        return `${d.getMonth() + 1}/${d.getFullYear().toString().slice(-2)}`;
+                      }
+                      return `${d.getDate()}/${d.getMonth() + 1}`;
+                    }}
+                  />
                   <YAxis
                     dataKey="drawdown"
                     stroke="hsl(var(--muted-foreground))"

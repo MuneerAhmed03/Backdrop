@@ -14,9 +14,10 @@ interface HeaderProps {
   isRunDisabled: boolean
   validationErrors: string[]
   strategyContent: string
+  isLoading: boolean
 }
 
-export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validationErrors, strategyContent }: HeaderProps) {
+export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validationErrors, strategyContent, isLoading }: HeaderProps) {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const { data: session } = useSession()
 
@@ -44,15 +45,15 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
                 <TooltipTrigger asChild>
                   <button 
                     onClick={onRunStrategy}
-                    disabled={isRunDisabled}
+                    disabled={isRunDisabled || isLoading}
                     className={`h-8 px-4 rounded-lg transition-colors flex items-center
-                      ${isRunDisabled 
+                      ${(isRunDisabled || isLoading)
                         ? 'bg-blue-600/50 cursor-not-allowed' 
                         : 'bg-blue-600 hover:bg-blue-700'
                       }`}
                   >
                     <Play className="w-4 h-4 mr-1.5" />
-                    Run
+                    {isLoading ? 'Running...' : 'Run'}
                   </button>
                 </TooltipTrigger>
                 {isRunDisabled && validationErrors.length > 0 && (

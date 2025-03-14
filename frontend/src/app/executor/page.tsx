@@ -193,6 +193,7 @@ export default function Executor() {
         isRunDisabled={!validation.isValid || isLoading}
         validationErrors={validation.errors}
         strategyContent={code}
+        isLoading={isLoading}
       />
       <div className="flex-1 flex">
         <div 
