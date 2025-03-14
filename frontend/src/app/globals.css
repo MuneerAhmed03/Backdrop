@@ -68,7 +68,7 @@
 /* reusable components and utilities */
 @layer components {
   .glassmorphism {
-    @apply backdrop-blur-xl bg-white/[0.03] border border-white/10 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.2)] transition-all duration-300;
+  @apply backdrop-blur-lg bg-black/30 border border-white/10;
   }
   
   .neo-blur {
@@ -144,5 +144,19 @@
   
   .radial-gradient {
     background: radial-gradient(circle at 50% 0%, rgba(var(--glow-color), 0.15), transparent 70%);
+  }
+}
+
+.monaco-editor {
+  --vscode-editor-background: transparent !important;
+  --vscode-editor-foreground: var(--foreground) !important;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }

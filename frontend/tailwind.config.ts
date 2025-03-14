@@ -208,7 +208,7 @@ export default {
 		plugin(({ addUtilities }) => {
 			addUtilities({
 				'.glassmorphism': {
-					'@apply backdrop-blur-xl bg-white/[0.03] border border-white/10 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.2)] transition-all duration-300': {}
+					'@apply backdrop-blur-lg bg-black/30 border border-white/10': {}
 				},
 				'.neo-blur': {
 					'@apply backdrop-blur-2xl bg-black/40 border border-white/10': {}
