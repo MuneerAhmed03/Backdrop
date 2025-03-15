@@ -128,6 +128,18 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour', 
+        'user': '1000/hour',  
+        'code_execution': '1/minute',  
+        'template_read': '1000/day',  
+        'health_check': '1000/hour',  
+        'task_result': '30/minute',
+    }
 }
 
 CACHES = {

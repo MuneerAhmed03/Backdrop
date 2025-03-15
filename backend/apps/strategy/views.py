@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from .serializers import UserSerializer, TemplateSerializer, TemplateListSerializer, UserListSerializer
 from .models import UserStrategy, TemplateStrategy
+from .throttling import TemplateReadRateThrottle
 
 class isAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -60,6 +61,7 @@ class GetUserStrategyByIdView(APIView):
 class GetTemplateMetadatView(APIView):
     authentication_classes = []  
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [TemplateReadRateThrottle]
 
     def get(self, request):
         templates = TemplateStrategy.objects.all()
@@ -69,6 +71,7 @@ class GetTemplateMetadatView(APIView):
 class GetTemplateStrategyByIdView(APIView):
     authentication_classes = [] 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [TemplateReadRateThrottle]
 
     def get(self, request, pk):
         try:

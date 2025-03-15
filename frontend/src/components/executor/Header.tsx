@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { SaveDialog } from './SaveDialog'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRunAttempts } from '@/lib/useRunAttempts'
 
 interface HeaderProps {
   onRunStrategy: () => void
@@ -19,7 +20,20 @@ interface HeaderProps {
 
 export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validationErrors, strategyContent, isLoading }: HeaderProps) {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const { data: session } = useSession()
+  const { canRun, incrementCount, remainingRuns } = useRunAttempts()
+
+  const handleRunClick = () => {
+    if (!canRun()) {
+      setIsAuthDialogOpen(true)
+      return
+    }
+    if (!session) {
+      incrementCount()
+    }
+    onRunStrategy()
+  }
 
   return (
     <nav className="border-b border-border glassmorphism h-16 top-0 w-full z-50">
@@ -44,7 +58,7 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
-                    onClick={onRunStrategy}
+                    onClick={handleRunClick}
                     disabled={isRunDisabled || isLoading}
                     className={`h-8 px-4 rounded-lg transition-colors flex items-center
                       ${(isRunDisabled || isLoading)
@@ -93,7 +107,16 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
         </div>
 
         <div className="flex items-center gap-2">
-          <AuthButton />
+          <AuthButton 
+            isOpen={isAuthDialogOpen}
+            onClose={() => setIsAuthDialogOpen(false)}
+            onOpen={() => setIsAuthDialogOpen(true)}
+            customMessage={
+              !canRun() 
+                ? "Sign in to Continue and get access to all features!"
+                : undefined
+            }
+          />
         </div>
       </div>
 
