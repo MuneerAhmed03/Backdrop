@@ -3,21 +3,43 @@
 import Link from 'next/link'
 import { LayoutTemplate, Play, Save } from 'lucide-react'
 import { AuthButton } from '../AuthButton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { SaveDialog } from './SaveDialog'
+import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRunAttempts } from '@/lib/useRunAttempts'
 
 interface HeaderProps {
   onRunStrategy: () => void
   onShowTemplates: () => void
   isRunDisabled: boolean
   validationErrors: string[]
+  strategyContent: string
+  isLoading: boolean
 }
 
-export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validationErrors }: HeaderProps) {
+export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validationErrors, strategyContent, isLoading }: HeaderProps) {
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  const { data: session } = useSession()
+  const { canRun, incrementCount, remainingRuns } = useRunAttempts()
+
+  const handleRunClick = () => {
+    if (!canRun()) {
+      setIsAuthDialogOpen(true)
+      return
+    }
+    if (!session) {
+      incrementCount()
+    }
+    onRunStrategy()
+  }
+
   return (
-    <nav className="border-b border-border bg-card/80 backdrop-blur-xl h-16  top-0 w-full z-50">
+    <nav className="border-b border-border glassmorphism h-16 top-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <Link href="/" className="text-xl font-bold text-gradient">
             Backdrop
           </Link>
           <div className="h-6 w-px bg-border" />
@@ -36,16 +58,16 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
-                    onClick={onRunStrategy}
-                    disabled={isRunDisabled}
+                    onClick={handleRunClick}
+                    disabled={isRunDisabled || isLoading}
                     className={`h-8 px-4 rounded-lg transition-colors flex items-center
-                      ${isRunDisabled 
+                      ${(isRunDisabled || isLoading)
                         ? 'bg-blue-600/50 cursor-not-allowed' 
                         : 'bg-blue-600 hover:bg-blue-700'
                       }`}
                   >
                     <Play className="w-4 h-4 mr-1.5" />
-                    Run
+                    {isLoading ? 'Running...' : 'Run'}
                   </button>
                 </TooltipTrigger>
                 {isRunDisabled && validationErrors.length > 0 && (
@@ -62,17 +84,47 @@ export function Header({ onRunStrategy, onShowTemplates, isRunDisabled, validati
                 )}
               </Tooltip>
             </TooltipProvider>
-            <button className="hover:bg-accent/50 h-8 px-3 rounded-lg transition-colors flex items-center">
-              <Save className="w-4 h-4" />
-              Save
-            </button>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    onClick={() => session ? setIsSaveDialogOpen(true) : undefined}
+                    className={`hover:bg-accent/50 h-8 px-3 rounded-lg transition-colors flex items-center ${!session ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <Save className="w-4 h-4 mr-1.5" />
+                    Save
+                  </button>
+                </TooltipTrigger>
+                {!session && (
+                  <TooltipContent>
+                    <p>Login to save custom strategies</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <AuthButton />
+          <AuthButton 
+            isOpen={isAuthDialogOpen}
+            onClose={() => setIsAuthDialogOpen(false)}
+            onOpen={() => setIsAuthDialogOpen(true)}
+            customMessage={
+              !canRun() 
+                ? "Sign in to Continue and get access to all features!"
+                : undefined
+            }
+          />
         </div>
       </div>
+
+      <SaveDialog 
+        isOpen={isSaveDialogOpen}
+        onClose={() => setIsSaveDialogOpen(false)}
+        strategyContent={strategyContent}
+      />
     </nav>
   )
 }

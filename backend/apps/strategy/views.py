@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .serializers import UserSerializer, TemplateSerializer,    TemplateListSerializer
+from .serializers import UserSerializer, TemplateSerializer, TemplateListSerializer, UserListSerializer
 from .models import UserStrategy, TemplateStrategy
+from .throttling import TemplateReadRateThrottle
 
 class isAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -29,6 +30,7 @@ class AddOrUpdateUserStrategyView(APIView):
         if not title:
             return Response({"error": "Title Required"}, status=status.HTTP_400_BAD_REQUEST)
         
+        strategy = None
         try:
             strategy = UserStrategy.objects.get(title=title, author=request.user)
             serializer = UserSerializer(strategy, data=request.data, partial=True)
@@ -44,21 +46,22 @@ class AddOrUpdateUserStrategyView(APIView):
 class GetUserStrategiesView(APIView):
     def get(self, request):
         strategies = UserStrategy.objects.filter(author=request.user).order_by('-updated_at')
-        serializer = UserSerializer(strategies, many=True)
-        return Response(serializer.data)
+        serializer = UserListSerializer(strategies, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 class GetUserStrategyByIdView(APIView):
     def get(self, request, pk):
         try:
             strategy = UserStrategy.objects.get(id=pk, author=request.user)
-            serializer = UserSerializer(strategy)  
-            return Response(serializer.data)
+            # serializer = UserSerializer(strategy)  
+            return Response({"code" : strategy.code})
         except UserStrategy.DoesNotExist:
             return Response({"error": "Strategy Doesn't Exist"}, status=status.HTTP_404_NOT_FOUND)
         
 class GetTemplateMetadatView(APIView):
     authentication_classes = []  
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [TemplateReadRateThrottle]
 
     def get(self, request):
         templates = TemplateStrategy.objects.all()
@@ -68,11 +71,11 @@ class GetTemplateMetadatView(APIView):
 class GetTemplateStrategyByIdView(APIView):
     authentication_classes = [] 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [TemplateReadRateThrottle]
 
     def get(self, request, pk):
         try:
             template = TemplateStrategy.objects.get(id=pk)
-            print(template);
             return Response({"code" : template.code})
         except TemplateStrategy.DoesNotExist:
             return Response({"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND)

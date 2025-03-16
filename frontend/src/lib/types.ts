@@ -56,6 +56,8 @@ export type Template = {
   tags?:string
 }
 
+export type SavedStrategy=Omit<Template,"tags">
+
 export interface ChartDataPoint {
   date: string;
   equity: number;

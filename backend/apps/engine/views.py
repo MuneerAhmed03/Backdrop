@@ -10,6 +10,7 @@ import redis
 from celery.app.control import Control
 from config.celery import app as celery_app
 from time import time
+from .throttling import CodeExecutionRateThrottle, HealthCheckRateThrottle, TaskResultRateThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ class ServiceStatus:
 class HealthCheckView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [HealthCheckRateThrottle]
 
     def get(self, request):
         services = {
@@ -76,6 +78,7 @@ class HealthCheckView(APIView):
 class TaskResultView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [TaskResultRateThrottle]
     
     def get(self, request, task_id):
         try:
@@ -106,6 +109,7 @@ class TaskResultView(APIView):
 class CodeExecutionView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [CodeExecutionRateThrottle]
     
     def post(self, request):
         redis_status, redis_message = ServiceStatus.check_redis()
