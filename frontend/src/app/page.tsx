@@ -81,13 +81,9 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <GradientButton to="/dashboard" className="text-base font-medium">
+              <GradientButton to="/executor" className="text-base font-medium">
                 Start backtesting now
               </GradientButton>
-              
-              <Link href="/demo" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-base font-medium border border-white/10 hover:bg-white/5 transition-colors">
-                Watch demo
-              </Link>
             </div>
           </div>
           
