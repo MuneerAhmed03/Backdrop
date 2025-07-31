@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.contrib.postgres.search import SearchVector
-# Create your models here.
 
 class StockData(models.Model):
     symbol = models.CharField(max_length=10, unique=True)
@@ -11,7 +10,6 @@ class StockData(models.Model):
     latest_date = models.DateField(null=True)
     isEtf = models.BooleanField(default=False)
     source_file = models.CharField(max_length=255)
-    # search_vector = SearchVectorField(null=True,blank =True)
 
     class Meta:
         indexes = [ 

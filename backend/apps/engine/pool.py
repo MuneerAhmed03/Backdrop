@@ -77,7 +77,6 @@ class ContainerPool:
         return await loop.run_in_executor(self._executor, _acquire)
 
     def acquire_container(self):
-        """Synchronous version maintained for backward compatibility"""
         with self.lock:
             container = self.pool.get(block=True, timeout=30)
             self._active_containers.add(container.id)

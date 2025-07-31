@@ -16,6 +16,8 @@ staticfiles/
 
 .cursorrules
 
+logs
+
 # Environment variables
 .env
 
