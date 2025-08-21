@@ -25,3 +25,5 @@ supervisor.sock
 supervisord.pid
 supervisord.log
 
+staticfiles/
+media/
