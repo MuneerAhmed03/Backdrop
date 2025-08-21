@@ -21,4 +21,7 @@ logs
 # Environment variables
 .env
 
+supervisor.sock
+supervisord.pid
+supervisord.log
 
