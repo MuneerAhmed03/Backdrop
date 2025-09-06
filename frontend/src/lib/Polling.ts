@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { BACKEND_URL } from "@/lib/config";
 
 interface ExecutionResult {
   exit_code: number;
@@ -13,6 +14,8 @@ interface ParsedResponse {
     loss_cutting?: any;
   };
 }
+
+ 
 
 const useCodeExecution = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -54,7 +57,7 @@ const useCodeExecution = () => {
       setError(null);
       setIsLoading(true);
 
-      const response = await fetch('http://localhost:8001/engine/execute/', {
+      const response = await fetch(`${BACKEND_URL}engine/execute/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +105,7 @@ const useCodeExecution = () => {
   };
 
   async function pollTaskStatus(status_url: string) {
-    const poll_url = `http://localhost:8001${status_url}`;
+    const poll_url = `https://backdrop-api.muneerdev.me${status_url}`;
     const POLLING_INTERVAL = 1000; // 1 second
 
     while (true) {

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import { BACKEND_URL } from "@/lib/config"
 
 interface TemplatesModalProps {
   isOpen: boolean
@@ -12,8 +13,10 @@ interface TemplatesModalProps {
   onSelect: (code:string) => void
 }
 
+console.log("Backend URL:", BACKEND_URL);
+
 const fetchTemplates = async (): Promise<Template[]> => {
-  const response = await fetch('http://localhost:8001/strategy/templates/')
+  const response = await fetch(`${BACKEND_URL}strategy/templates/`)
   if (!response.ok) {
     throw new Error('Failed to fetch templates')
   }
@@ -21,7 +24,7 @@ const fetchTemplates = async (): Promise<Template[]> => {
 }
 
 const fetchTemplateById = async (id: number): Promise<{code : string}> => {
-  const response = await fetch(`http://localhost:8001/strategy/template/${id}/`)
+  const response = await fetch(`${BACKEND_URL}strategy/template/${id}/`)
   if (!response.ok) {
     throw new Error('Failed to fetch template')
   }
@@ -29,7 +32,7 @@ const fetchTemplateById = async (id: number): Promise<{code : string}> => {
 }
 
 const fetchSavedStrategies = async (token: string): Promise<SavedStrategy[]> => {
-  const response = await fetch('http://localhost:8001/strategy/retrieve', {
+  const response = await fetch(`${BACKEND_URL}strategy/retrieve`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -41,7 +44,7 @@ const fetchSavedStrategies = async (token: string): Promise<SavedStrategy[]> => 
 }
 
 const fetchSavedStrategyById = async (id: number, token: string): Promise<{code: string}> => {
-  const response = await fetch(`http://localhost:8001/strategy/retrieve/${id}/`, {
+  const response = await fetch(`${BACKEND_URL}strategy/retrieve/${id}/`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }

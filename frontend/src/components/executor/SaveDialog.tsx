@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import toast from 'react-hot-toast'
 import { useState } from 'react'
+import { BACKEND_URL } from "@/lib/config"
 
 interface SaveDialogProps {
   isOpen: boolean
@@ -25,6 +26,8 @@ interface FormValues {
   title: string
   description: string
 }
+
+ 
 
 export function SaveDialog({ isOpen, onClose, strategyContent }: SaveDialogProps) {
   const { data: session } = useSession()
@@ -59,7 +62,7 @@ export function SaveDialog({ isOpen, onClose, strategyContent }: SaveDialogProps
     setIsSaving(true)
     
     try {
-      const response = await fetch('http://localhost:8001/strategy/add/', {
+      const response = await fetch(`${BACKEND_URL}strategy/add/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

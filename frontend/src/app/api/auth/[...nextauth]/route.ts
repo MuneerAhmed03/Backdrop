@@ -9,6 +9,8 @@ declare module "next-auth" {
   }
 }
 
+const BACKEND_URL = process.env.BACKEND_URL;
+
 declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string;
@@ -40,7 +42,7 @@ const handler = NextAuth({
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         try {
-          const response = await fetch("http://localhost:8001/auth/create-user/", {
+          const response = await fetch(`${BACKEND_URL}auth/create-user/`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
