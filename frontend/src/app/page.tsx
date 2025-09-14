@@ -67,9 +67,6 @@ const Index = () => {
         
         <div className="max-w-7xl mx-auto relative">
           <div className="flex flex-col items-center text-center space-y-8 opacity-0 animate-fade-in">
-            <div className="px-4 py-1.5 rounded-full glassmorphism text-xs font-medium uppercase tracking-wider mb-2 opacity-80">
-              Professional Python Backtesting
-            </div>
             
             <h1 className="text-4xl md:text-7xl font-bold leading-tight tracking-tight">
               <span className="text-gradient">Backtest</span> your <br className="hidden md:block" />
@@ -77,7 +74,7 @@ const Index = () => {
             </h1>
             
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Transform your Python trading ideas into quantifiable results with our professional backtesting platform. Test, iterate, and optimize with confidence.
+              Test, iterate, and optimize.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -106,8 +103,7 @@ const Index = () => {
                   </div>
                   
                   <div className="pt-12 px-6 text-left font-mono text-sm text-blue-200/90 animate-fade-in" style={{ animationDelay: "0.6s" }}>
-  <p><span className="text-pink-400">def</span> <span className="text-yellow-200">generate_signals</span>(self):</p>
-  <p className="pl-8"><span className="text-blue-300">data</span> = <span className="text-blue-300">self</span>.data</p>
+  <p><span className="text-pink-400">def</span> <span className="text-yellow-200">generate_signals</span>(data):</p>
   <p className="pl-8">short_window = <span className="text-green-300">14</span></p>
   <p className="pl-8">long_window = <span className="text-green-300">28</span></p>
   <br />

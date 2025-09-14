@@ -8,6 +8,8 @@ interface FeatureCardProps {
   index: number;
 }
 
+export const runtime = "edge";
+
 export const FeatureCard = ({ icon: Icon, title, description, index }: FeatureCardProps) => {
   const animationDelay = `${index * 0.1}s`;
   

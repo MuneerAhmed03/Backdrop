@@ -47,44 +47,54 @@ interface ExecutionError {
 }
 
 export default function Executor() {
+  const [vw, setVw] = useState(0);
+
+  useEffect(() => {
+    const update = () => setVw(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const [editorWidth, setEditorWidth] = useState(0);
+  useEffect(() => {
+    if (editorWidth === 0 && vw > 0) {
+      setEditorWidth(Math.floor(vw * 0.67));
+    }
+  }, [vw, editorWidth]);
+
   const [showTemplates, setShowTemplates] = useState(false);
   const [showParameters, setShowParameters] = useState(true);
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [editorWidth, setEditorWidth] = useState(() => Math.floor(window.innerWidth * 0.67));
   const [isResizing, setIsResizing] = useState(false);
   const [instrument, setInstrument] = useState<StockDataResponse | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
-  const [strategy,setStrategy]=useState<string>("Risk Reduction");
-  const {executeCode, isLoading, result, error,parsedResult} = useCodeExecution();
+  const [strategy, setStrategy] = useState<string>("Risk Reduction");
+  const { executeCode, isLoading, result, error, parsedResult } = useCodeExecution();
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const today = new Date();
     const oneWeekAgo = new Date(today);
     oneWeekAgo.setDate(today.getDate() - 7);
-    
-    const firstDayOfYear = new Date(today.getFullYear(), 0, 1); 
-    
-    return {
-      from: firstDayOfYear,
-      to: oneWeekAgo,
-    };
+    const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
+    return { from: firstDayOfYear, to: oneWeekAgo };
   });
   const [initialCapital, setInitialCapital] = useState<number>(100000);
   const [investmentPerTrade, setInvestmentPerTrade] = useState<number>(10000);
   const validation = useStrategyValidation();
   const [executionError, setExecutionError] = useState<ExecutionError | null>(null);
 
-  
   const parameterPaneWidth = useMemo(() => {
-    
-    const minParamWidth = Math.floor(window.innerWidth * 0.33);
-    const calculatedWidth = window.innerWidth - editorWidth - 1;
+    if (vw === 0) return 0;
+    const minParamWidth = Math.floor(vw * 0.33);
+    const calculatedWidth = vw - editorWidth - 1;
     return Math.max(calculatedWidth, minParamWidth);
-  }, [editorWidth]);
+  }, [vw, editorWidth]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsResizing(true);
     e.preventDefault();
   };
+
 
   const handleMouseUp = () => {
     setIsResizing(false);

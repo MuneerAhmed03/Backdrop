@@ -71,7 +71,7 @@ export default function DateRangePicker({
             </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={4}>
+        <PopoverContent className="min-w-[320px] p-0" align="start" side="bottom" sideOffset={4}>
           <div className="px-4 pt-4 flex gap-2">
             <Select onValueChange={handleMonthChange} defaultValue={months[currentMonth]}>
               <SelectTrigger className="flex-1 min-w-[140px]">

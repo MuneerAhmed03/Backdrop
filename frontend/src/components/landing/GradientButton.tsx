@@ -8,6 +8,8 @@ interface GradientButtonProps {
   showArrow?: boolean;
 }
 
+export const runtime = "edge";
+
 export const GradientButton = ({ 
   to, 
   children, 
