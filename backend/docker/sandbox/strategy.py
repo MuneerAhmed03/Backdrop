@@ -129,7 +129,7 @@ class BaseStrategy(ABC):
         excess_returns = returns - risk_free_rate / 252
         downside_returns = excess_returns[excess_returns < 0]
         if len(downside_returns) == 0:
-            return "∞" if excess_returns.mean() > 0 else 0.0                                                                                                                ll
+            return "∞" if excess_returns.mean() > 0 else 0.0
         return np.sqrt(252) * excess_returns.mean() / downside_returns.std()
 
     def _close_trade(self, trade:Trade , exit_price,index_pos):
@@ -142,7 +142,10 @@ class BaseStrategy(ABC):
 
 
     def run_backtest(self) -> StrategyResult:
-        self.generate_signals()
+        try:
+            self.generate_signals.__func__(self.data)   
+        except AttributeError:
+            type(self).generate_signals(self.data)
         if 'signal' not in self.data.columns:
             raise ValueError("No 'signal' column found in DataFrame. Implement generate_signals() correctly.")
 
@@ -177,12 +180,12 @@ class BaseStrategy(ABC):
                         heapq.heappush(self.openTrades, (key,trade_index))
                         self.availableCapital -= trade_cost
 
-                elif signals.iloc[i] == -1:
-                    if self.openTrades:
-                        _, trade_index = heapq.heappop(self.openTrades)
-                        trade = self.trades[trade_index]
-                        self._close_trade(trade, price, i)
-                        self.currentPosition-=1
+            elif signals.iloc[i] == -1:
+                if self.openTrades:
+                    _, trade_index = heapq.heappop(self.openTrades)
+                    trade = self.trades[trade_index]
+                    self._close_trade(trade, price, i)
+                    self.currentPosition-=1
 
     
             self.equityCurve.iloc[i] = self.equityCurve.iloc[i - 1]

@@ -9,17 +9,39 @@ import json
 from datetime import datetime
 from strategy import BaseStrategy, Trade
 import warnings
+import inspect
 
 logging.basicConfig(
-    level=logging.ERROR,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(sys.stderr),
     ]
 )
 
+HOST_TMPFS_BIND = os.environ.get("HOST_TMPFS_BIND", "/host_tmpfs")
+
 logger = logging.getLogger(__name__)
 logger.propagate = False;
+
+def _format_dir_listing(path: str) -> str:
+    try:
+        entries = []
+        with os.scandir(path) as it:
+            for e in it:
+                try:
+                    st = e.stat()
+                    size = st.st_size if e.is_file() else "-"
+                    kind = "DIR" if e.is_dir() else ("LNK" if e.is_symlink() else "FILE")
+                    entries.append(f"{kind:4} {size:>10}  {e.name}")
+                except Exception as ie:
+                    entries.append(f"????          ?  {e.name}  (stat error: {ie})")
+        if not entries:
+            return f"(empty) {path}"
+        entries.sort()
+        return "\n".join(entries)
+    except Exception as e:
+        return f"(failed to list {path}: {e})"
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):
     stderr_messages.append(f"{category.__name__}: {message}")
@@ -41,8 +63,15 @@ def validate_user_code(code):
     SafeCodeVisitor().visit(tree)
 
 def load_data():
-    code_path = '/host_tmpfs/code.py'  
-    data_path = '/host_tmpfs/data.pkl'  
+    try:
+        logger.error("HOST_TMPFS_BIND=%s", HOST_TMPFS_BIND)
+        listing = _format_dir_listing(HOST_TMPFS_BIND)
+        logger.error("Container sees contents of %s:\n%s", HOST_TMPFS_BIND, listing)
+    except Exception as e:
+        logger.error("Could not list %s at startup: %s", HOST_TMPFS_BIND, e)
+
+    code_path = '/host_tmpfs/code.py'
+    data_path = '/host_tmpfs/data.pkl'
     config_path = '/host_tmpfs/config.txt'
 
     try:
@@ -123,6 +152,18 @@ if __name__ == "__main__":
         
         if 'generate_signals' not in local_env or not callable(local_env['generate_signals']):
             raise ValueError("No valid 'generate_signals' function defined")
+        
+        user_fn = local_env['generate_signals']
+        sig = inspect.signature(user_fn)    
+        
+        if len(sig.parameters) == 1:
+            logger.error("User function takes data")
+            def _generate_signals(self):
+                return user_fn(self.data)
+        else:
+            logger.error("User function takes self")
+            def _generate_signals(self):
+                return user_fn(self)
         
         UserStrategy = type(
             "UserStrategy",
