@@ -1,6 +1,7 @@
 # Backdrop Trading Strategy Platform - System Architecture Design
 
-![alt text](diagram-export-14-09-2025-16_06_25.png)
+
+<img width="2743" height="1747" alt="diagram-export-14-09-2025-16_06_25" src="https://github.com/user-attachments/assets/ae74a761-da3a-42fb-95a6-2fa9650f6904" />
 
 
 Backdrop is a financial trading strategy backtesting platform that allows users to write, test, and analyze custom trading strategies using historical market data. The system provides a secure sandbox environment for code execution and comprehensive backtesting capabilities.
