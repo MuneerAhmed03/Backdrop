@@ -46,8 +46,8 @@ DEBUG = False
 ALLOWED_HOSTS = [
         "127.0.0.1",
         "localhost",
-        "206.189.140.30",
-        "backdrop-api.muneerdev.me"
+        os.getenv('DROPLET_IP'),
+        os.getenv('HOST_DOMAIN', 'backdrop-api.muneerdev.me')
         ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
