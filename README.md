@@ -1,6 +1,7 @@
 # Backdrop Trading Strategy Platform - System Architecture Design
 
-## Executive Summary
+![alt text](diagram-export-14-09-2025-16_06_25.png)
+
 
 Backdrop is a financial trading strategy backtesting platform that allows users to write, test, and analyze custom trading strategies using historical market data. The system provides a secure sandbox environment for code execution and comprehensive backtesting capabilities.
 
@@ -12,7 +13,6 @@ Backdrop is a financial trading strategy backtesting platform that allows users 
 - **Backtesting Engine**: Historical data backtesting with configurable parameters
 - **Market Data Integration**: Access to historical stock and ETF data
 - **User Authentication**: Google OAuth integration with session management
-- **Performance Analytics**: Strategy performance metrics and visualization
 
 ## Architecture Components
 
@@ -32,7 +32,7 @@ Docker Compose is used **exclusively** for:
 - **Redis**: Message broker and caching
 - **Sandbox Image Building**: Pre-built code execution environment
 
-**Note**: Django and Celery run natively on the host system via Supervisord, NOT in containers.
+**Note**: Django and Celery run natively on the host system via Supervisord.
 
 ### 2. Application Layer
 
@@ -104,8 +104,8 @@ Docker Compose is used **exclusively** for:
 #### 4.2 Redis Cache & Message Broker
 - **Version**: Redis 7.2
 - **Dual Purpose**:
-  - **Celery Broker**: Database 0 (`redis://redis:6379/0`)
-  - **Django Cache**: Database 1 (`redis://127.0.0.1:6379/1`)
+  - **Celery Broker**
+  - **Django Cache**
 - **Features**:
   - Data persistence with AOF
   - Connection pooling
@@ -181,81 +181,6 @@ Data Processing → Redis Cache → DataFrame Serialization →
 Container Mount
 ```
 
-### 8. Deployment Architecture
-
-#### 8.1 Host System Components
-- **Operating System**: Linux
-- **Process Manager**: Supervisord
-- **Python Environment**: Virtual environment
-- **Application Code**: `/home/steakystick/backdrop/backend/`
-
-#### 8.2 Containerized Components
-- **PostgreSQL**: Data persistence
-- **Redis**: Caching and message brokering
-- **Sandbox Containers**: Code execution (dynamically created)
-
-#### 8.3 Network Architecture
-- **Docker Network**: `backend_backend` (bridge mode)
-- **Port Mappings**:
-  - PostgreSQL: `5432:5432`
-  - Redis: `127.0.0.1:6379:6379`
-  - Django Web: `8000:8000`
-
-### 9. Configuration Management
-
-#### 9.1 Environment Variables
-- Database credentials (POSTGRES_*)
-- Authentication keys (GOOGLE_CLIENT_ID, NEXTAUTH_SECRET)
-- Django settings (SECRET_KEY, DEBUG)
-- Celery configuration (CELERY_BROKER_URL)
-
-#### 9.2 Configuration Files
-- `config/settings.py`: Django settings
-- `config/celery.py`: Celery configuration
-- `supervisord.conf`: Process management
-- `docker-compose.yml`: Container orchestration
-
-### 10. Monitoring & Logging
-
-#### 10.1 Application Logging
-- **Django Logs**: Console and file-based logging
-- **Celery Logs**: Task execution monitoring
-- **Supervisord Logs**: Process management logs
-- **Log Location**: `/home/steakystick/backdrop/backend/logs/`
-
-#### 10.2 Health Monitoring
-- **Database**: Connection health checks
-- **Redis**: Broker connectivity monitoring
-- **Container Pool**: Active container tracking
-- **Task Queue**: Worker status monitoring
-
-### 11. Performance Considerations
-
-#### 11.1 Caching Strategy
-- **Market Data**: 7-day Redis cache
-- **User Sessions**: Redis-backed sessions
-- **Database Queries**: Connection pooling
-
-#### 11.2 Scalability Design
-- **Horizontal Scaling**: Multiple Celery workers
-- **Container Pool**: Adjustable pool size
-- **Database**: Connection pooling and indexing
-- **Load Balancing**: Ready for reverse proxy integration
-
-### 12. Development & Operations
-
-#### 12.1 Development Workflow
-- **Code Changes**: Direct file system edits
-- **Process Restart**: Supervisorctl commands
-- **Database Migrations**: Django management commands
-- **Container Updates**: Docker Compose rebuild
-
-#### 12.2 Operational Commands
-- **Start Services**: `supervisorctl start all`
-- **Restart Application**: `supervisorctl restart backdrop-web`
-- **Monitor Processes**: `supervisorctl status`
-- **View Logs**: `tail -f logs/backdrop-web.log`
-
 ## Technology Stack Summary
 
 | Component | Technology | Version | Purpose |
@@ -268,18 +193,3 @@ Container Mount
 | Container Runtime | Docker | Latest | Code sandboxing |
 | Python Runtime | Python | 3.13 | Application runtime |
 
-## Security Compliance
-
-- **Data Protection**: Encrypted connections, secure sessions
-- **Code Isolation**: Containerized execution environment
-- **Access Control**: OAuth-based authentication
-- **Resource Limits**: Constrained execution environment
-- **Audit Trail**: Comprehensive logging
-
-## Future Enhancements
-
-- **Horizontal Scaling**: Multiple application instances
-- **Advanced Monitoring**: Metrics collection and alerting
-- **Enhanced Security**: Additional sandbox restrictions
-- **Performance Optimization**: Query optimization and caching improvements
-- **API Expansion**: Additional financial data sources
