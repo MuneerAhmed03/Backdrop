@@ -1,7 +1,7 @@
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle, SimpleRateThrottle
 
 class CodeExecutionRateThrottle(SimpleRateThrottle):
-    rate = '1/minute'
+    rate = '5/minute'
     scope = 'code_execution'
 
     def get_cache_key(self, request, view):
@@ -19,5 +19,5 @@ class HealthCheckRateThrottle(AnonRateThrottle):
     scope = 'health_check'
 
 class TaskResultRateThrottle(AnonRateThrottle):
-    rate = '30/minute'
+    rate = '150/minute'
     scope = 'task_result' 

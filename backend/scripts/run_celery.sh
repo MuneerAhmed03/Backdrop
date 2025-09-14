@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
 set -Eeuo pipefail
-APP_HOME="${APP_HOME:-"$(cd "$(dirname "$0")/.."; pwd)"}"
+APP_HOME=${APP_HOME:-/home/steakystick/backdrop/backend}
 cd "$APP_HOME"
 
 set -a

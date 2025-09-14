@@ -17,8 +17,8 @@ from datetime import timedelta
 
 load_dotenv()
 
-DEBUG = os.getenv('url', '3000')
-print("DEBUG:", DEBUG)
+# SECURITY: Fix DEBUG configuration
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 NEXTAUTH_SECRET = os.getenv('NEXTAUTH_SECRET')
@@ -37,14 +37,24 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY environment variable is required")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+        "127.0.0.1",
+        "localhost",
+        "206.189.140.30",
+        "backdrop-api.muneerdev.me"
+        ]
 
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Application definition
+
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -75,13 +85,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3001",  
-#     "https://yourfrontenddomain.com", 
-#     "http://localhost:3000",
-#     "http://localhost:3002",
-# ]
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://backdrop-api.muneerdev.me",
+    "https://backdrop.pages.dev",
+]
+# SECURITY: Never use CORS_ALLOW_ALL_ORIGINS = True in production
+CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -139,10 +149,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/hour', 
         'user': '1000/hour',  
-        'code_execution': '1/minute',  
-        'template_read': '1000/day',  
-        'health_check': '1000/hour',  
-        'task_result': '30/minute',
+        'code_execution': '5/minute',  
+        'template_read': '1000/minute',  
+        'health_check': '1000/minute',  
+        'task_result': '150/minute',
     }
 }
 

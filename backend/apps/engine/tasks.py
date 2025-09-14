@@ -14,6 +14,26 @@ import aiofiles
 
 logger = logging.getLogger(__name__)
 
+def _format_dir_listing(path: str) -> str:
+    try:
+        entries = []
+        with os.scandir(path) as it:
+            for e in it:
+                try:
+                    st = e.stat()
+                    size = st.st_size if e.is_file() else "-"
+                    kind = "DIR" if e.is_dir() else ("LNK" if e.is_symlink() else "FILE")
+                    entries.append(f"{kind:4} {size:>10}  {e.name}")
+                except Exception as ie:
+                    entries.append(f"????          ?  {e.name}  (stat error: {ie})")
+        if not entries:
+            return f"(empty) {path}"
+        entries.sort()
+        return "\n".join(entries)
+    except Exception as e:
+        return f"(failed to list {path}: {e})"
+
+
 def serialize_df(df):
     return base64.b64encode(pickle.dumps(df)).decode('utf-8')
 
@@ -82,6 +102,12 @@ async def prepare_files(temp_dir, code, data_frame, config):
         write_data(data_path, data_frame),
         write_config(config_path, config)
     )
+    
+    await loop.run_in_executor(None, os.sync)
+    
+    listing = await loop.run_in_executor(None, _format_dir_listing, temp_dir)
+    logger.info("Host mount subdir contents (%s):\n%s", temp_dir, listing)
+
     return code_path, data_path, config_path
 
 
